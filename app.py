@@ -3,7 +3,7 @@ from flask import Flask, request, session, g, redirect, url_for, abort,\
   render_template, flash
 from contextlib import closing
 
-DATABASE = '/tmp/flaskr.db'
+DATABASE = '/tmp/metr.db'
 DEBUG = True
 SECRET_KEY = 'development key'
 USERNAME = 'admin'
@@ -34,21 +34,28 @@ def init_db():
       db.cursor().executescript(f.read())
     db.commit()
 
+def last_commit(id):
+  try:
+    cur = g.db.execute('select timestamp from commits where project_id=? order by timestamp desc limit 1', [id])
+    return cur.fetchone()[0]
+  except:
+    return 0
+
 @app.route('/')
-def show_entries():
-  cur = g.db.execute('select title, text from entries order by id desc')
-  entries = [dict(title=row[0], text=row[1]) for row in cur.fetchall()]
-  return render_template('show_entries.html', entries=entries)
+def show_projects():
+  cur = g.db.execute('select id, name from projects order by id desc')
+  projects = [dict(id=row[0], name=row[1], commit=last_commit(row[0])) for row in cur.fetchall()]
+  return render_template('show_projects.html', projects=projects)
 
 @app.route('/add', methods=['POST'])
-def add_entry():
+def add_project():
   if not session.get('logged_in'):
     abort(401)
-  g.db.execute('insert into entries (title, text) values (?, ?)',
-    [request.form['title'], request.form['text']])
+  g.db.execute('insert into projects (name, repository, branch) values (?, ?, ?)',
+    [request.form['name'], request.form['repository'], request.form['branch']])
   g.db.commit()
-  flash('New entry was successfully posted')
-  return redirect(url_for('show_entries'))
+  flash('New project was successfully added')
+  return redirect(url_for('show_projects'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -61,14 +68,14 @@ def login():
     else:
       session['logged_in'] = True
       flash('You were loggined in')
-      return redirect(url_for('show_entries'))
+      return redirect(url_for('show_projects'))
   return render_template('login.html', error=error)
 
 @app.route('/logout')
 def logout():
   session.pop('logged_in', None)
   flash('You were logged out')
-  return redirect(url_for('show_entries'))
+  return redirect(url_for('show_projects'))
 
 
 if __name__ == '__main__':
