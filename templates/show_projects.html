@@ -1,18 +1,30 @@
 {% extends "layout.html" %}
+
+
 {% block body %}
-  {% if session.logged_in %}
-    <form action="{{ url_for('add_project') }}" method=post class=add-entry>
-      <dl>
-        <dt>Name:
-        <dd><input type=text size=40 name=name>
-        <dt>Repository:
-        <dd><input type=text size=40 name=repository>
-        <dt>Branch:
-        <dd><input type=text size=40 name=branch>
-        <dd><input type=submit value=Add>
-      </dl>
-    </form>
-  {% endif %}
+  <table class="table">
+    <tr>
+      <th>Category</th>
+      <th>#</th>
+      <th>Actions</th>
+    </tr>
+    <tr>
+      <td># of projects</td>
+      <td>{{ projects|length }}</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>added but not cloned</td>
+      <td>{{ projects|length }}</td>
+      <td><a href="{{ url_for('clone_repositories') }}" class=btn>clone</a></td>
+    </tr>
+    <tr>
+      <td>analyzed but outdated</td>
+      <td>{{ projects|length }}</td>
+      <td><a href="{{ url_for('update_repositories') }}" class=btn>update</a></td>
+    </tr>
+  </table>
+
   <ul class=entries>
   {% for project in projects %}
     <li><h2>{{ project.name }}</h2>{{ project.last_commit }}

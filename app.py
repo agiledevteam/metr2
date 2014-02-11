@@ -1,6 +1,7 @@
 import sqlite3
 from flask import Flask, request, session, g, redirect, url_for, abort,\
   render_template, flash
+from flask_bootstrap import Bootstrap
 from contextlib import closing
 
 DATABASE = '/tmp/metr.db'
@@ -8,10 +9,11 @@ DEBUG = True
 SECRET_KEY = 'development key'
 USERNAME = 'admin'
 PASSWORD = 'default'
+GITDIR = 'git'
 
 app = Flask(__name__)
 app.config.from_object(__name__)
-#app.config.from_envvar('FLASKR_SETTINS', silent=True)
+Bootstrap(app)
 
 @app.before_request
 def before_request():
@@ -77,6 +79,16 @@ def logout():
   flash('You were logged out')
   return redirect(url_for('show_projects'))
 
+@app.route('/clone')
+def clone_repositories():
+  flash('Not implemented')
+  return redirect(url_for('show_projects'))
+
+
+@app.route('/update')
+def update_repositories():
+  flash('Not implemented')
+  return redirect(url_for('show_projects'))
 
 if __name__ == '__main__':
   app.run()
