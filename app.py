@@ -3,6 +3,7 @@ from flask import Flask, request, session, g, redirect, url_for, abort,\
   render_template, flash
 from flask_bootstrap import Bootstrap
 from contextlib import closing
+import git
 
 DATABASE = '/tmp/metr.db'
 DEBUG = True
@@ -84,10 +85,16 @@ def clone_repositories():
   flash('Not implemented')
   return redirect(url_for('show_projects'))
 
+@app.route('/update/<int:project_id>')
+def update(project_id):
+  git.update(g.db, project_id)
+  return redirect(url_for('show_projects'))
 
-@app.route('/update')
+@app.route('/updateall')
 def update_repositories():
-  flash('Not implemented')
+  cur = g.db.execute('select id, name, repository, branch from projects order by id desc')
+  for r in cur.fetchall():
+    git.update_project(r[1], r[2], r[3])
   return redirect(url_for('show_projects'))
 
 if __name__ == '__main__':
