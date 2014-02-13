@@ -1,0 +1,6 @@
+
+
+# username to connect ssh 
+# this will be inserted ssh://<username>@host...
+SSH_USERNAME = ''
+
