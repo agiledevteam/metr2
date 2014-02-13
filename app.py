@@ -5,6 +5,7 @@ from flask_bootstrap import Bootstrap
 from contextlib import closing
 import git
 import config # check if config.py is prepared
+import time
 
 DATABASE = '/tmp/metr.db'
 DEBUG = True
@@ -12,6 +13,7 @@ SECRET_KEY = 'development key'
 USERNAME = 'admin'
 PASSWORD = 'default'
 GITDIR = 'git'
+updatetime = {}
 
 app = Flask(__name__)
 app.config.from_object(__name__)
@@ -44,11 +46,18 @@ def last_commit(id):
     return cur.fetchone()[0]
   except:
     return 0
+def init_updatetime():
+  if len(updatetime) == 0 :
+    cur = g.db.execute('select id from projects order by id desc')
+    for r in cur.fetchall() :
+       updatetime[r[0]] = '--' 
+
 
 @app.route('/')
 def show_projects():
+  init_updatetime()
   cur = g.db.execute('select id, name from projects order by id desc')
-  projects = [dict(id=row[0], name=row[1], commit=last_commit(row[0])) for row in cur.fetchall()]
+  projects = [dict(id=row[0], name=row[1], commit=last_commit(row[0]),update_time=updatetime[row[0]]) for row in cur.fetchall()]
   return render_template('show_projects.html', projects=projects)
 
 @app.route('/add', methods=['POST'])
@@ -89,6 +98,7 @@ def clone_repositories():
 @app.route('/update/<int:project_id>')
 def update(project_id):
   git.update(g.db, project_id)
+  updatetime[project_id] = time.ctime(time.time())
   return redirect(url_for('show_projects'))
 
 @app.route('/updateall')
@@ -96,6 +106,7 @@ def update_repositories():
   cur = g.db.execute('select id, name, repository, branch from projects order by id desc')
   for r in cur.fetchall():
     git.update_project(r[1], r[2], r[3])
+    updatetime[r[0]] = time.ctime(time.time())
   return redirect(url_for('show_projects'))
 
 @app.route('/delete/<int:project_id>')
