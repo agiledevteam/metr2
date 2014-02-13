@@ -97,6 +97,12 @@ def update_repositories():
     git.update_project(r[1], r[2], r[3])
   return redirect(url_for('show_projects'))
 
+@app.route('/delete/<int:project_id>')
+def delete(project_id):
+  git.delete(g.db, project_id)
+  return redirect(url_for('show_projects'))
+
+
 if __name__ == '__main__':
   app.run()
 
