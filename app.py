@@ -4,6 +4,7 @@ from flask import Flask, request, session, g, redirect, url_for, abort,\
 from flask_bootstrap import Bootstrap
 from contextlib import closing
 import git
+import config # check if config.py is prepared
 
 DATABASE = '/tmp/metr.db'
 DEBUG = True
