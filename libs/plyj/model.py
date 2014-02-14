@@ -27,6 +27,9 @@ class SourceElement(object):
     def accept(self, visitor):
         pass
 
+def safe_accept(element, visitor):
+    if isinstance(element, SourceElement):
+        element.accept(visitor)
 
 class CompilationUnit(SourceElement):
 
@@ -50,7 +53,7 @@ class CompilationUnit(SourceElement):
             for import_decl in self.import_declarations:
                 import_decl.accept(visitor)
             for type_decl in self.type_declarations:
-                type_decl.accept(visitor)
+                safe_accept(type_decl, visitor)
 
 
 class PackageDeclaration(SourceElement):
@@ -103,7 +106,8 @@ class ClassDeclaration(SourceElement):
     def accept(self, visitor):
         if visitor.visit_ClassDeclaration(self):
             for decl in self.body:
-                decl.accept(visitor)
+                if decl != None:   # can be None if empty (;)
+                    decl.accept(visitor)
 
 
 class ClassInitializer(SourceElement):
@@ -233,8 +237,7 @@ class VariableDeclarator(SourceElement):
 
     def accept(self, visitor):
         if visitor.visit_VariableDeclarator(self):
-            if self.initializer != None:
-                self.initializer.accept(visitor) 
+            safe_accept(self.initializer, visitor) 
 
 
 
@@ -463,8 +466,8 @@ class BinaryExpression(Expression):
 
     def accept(self, visitor):
         if visitor.visit_BinaryExpression(self):
-            self.lhs.accept(visitor)
-            self.rhs.accept(visitor)
+            safe_accept(self.lhs, visitor)
+            safe_accept(self.rhs, visitor)
 
 
 class Assignment(BinaryExpression):
@@ -606,9 +609,11 @@ class MethodInvocation(Expression):
     def accept(self, visitor):
         if visitor.visit_MethodInvocation(self):
             if self.target != None:
-                self.target.accept(visitor)
+                if isinstance(self.target, Expression):
+                    self.target.accept(visitor)
             for arg in self.arguments:
-                arg.accept(visitor)
+                if isinstance(arg, Expression):
+                    arg.accept(visitor)
 
 
 class IfThenElse(Statement):
@@ -885,9 +890,10 @@ class InstanceCreation(Expression):
     def accept(self, visitor):
         if visitor.visit_InstanceCreation(self):
             for arg in self.arguments:
-                arg.accept(visitor)
+                if isinstance(arg, Expression):
+                    arg.accept(visitor)
             for decl in self.body:
-                decl.accept(visitor)
+                safe_accept(decl, visitor)
 
 
 class FieldAccess(Expression):

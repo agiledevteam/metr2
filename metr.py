@@ -8,11 +8,20 @@ import plyj.model as java
 
 parser = plyj.Parser()
 
-# input as string
 def metr(input):
   tree = parser.parse_string(input)
   exes = find_executables(tree)
-  return [exe.stat() for exe in exes]
+  return stat_sum(exe.stat() for exe in exes)
+
+def stat_sum(stats):
+  cc = 0
+  sloc = 0
+  dloc = 0
+  for stat in stats:
+    cc += stat.cc -1
+    sloc += stat.sloc
+    dloc += stat.dloc
+  return Stat(cc+1, sloc, dloc) 
 
 def find_executables(tree):
   visitor = TreeVisitor(False)
@@ -269,12 +278,11 @@ abstract class BreakWithLabelDemo {
         }
     }
 
-}
-""")
+}// End of Class""")
   print stat 
 
 if __name__ == '__main__':
-  print 'todo : defaut in switch statement doesn't increase cc '
+  print "todo : defaut in switch statement doesn't increase cc "
   print 'todo : contribute plyj'
   test()
 
