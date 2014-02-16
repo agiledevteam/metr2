@@ -1,0 +1,64 @@
+{% extends "layout.html" %}
+
+{% block head %}
+{{ super() }}
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script type="text/javascript">
+
+// Load the Visualization API and the piechart package.
+google.load('visualization', '1', {'packages':['corechart']});
+
+// Set a callback to run when the Google Visualization API is loaded.
+google.setOnLoadCallback(drawChart);
+
+function drawChart() {
+  var json = $.ajax({
+    url: "/api/project/{{project.id}}",
+    dataType:"json",
+    async: false
+  }).responseText;
+
+  json = jQuery.parseJSON(json);
+  for ( var i = 0; i < json.rows.length; i++ ) { 
+        json.rows[i].c[0].v = new Date( json.rows[i].c[0].v * 1000 );
+  }
+  // Create our data table out of JSON data loaded from server.
+  var data = new google.visualization.DataTable(json);
+
+  var options = {
+    series:{1:{targetAxisIndex:1}},
+    vAxes:[
+      {
+      title:'code fat',
+//      viewWindowMode: 'explicit',
+//      viewWindow:{max:50, min:0}
+      }, 
+      {title:'sloc',textStyle:{color: 'red'}} // Axis 1
+           ],
+    explorer: { actions: ['dragToZoom', 'rightClickToReset'] } ,
+    width: 600,
+    height: 340
+  };
+  // Instantiate and draw our chart, passing in some options.
+  var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+  chart.draw(data, options); 
+}  
+</script>
+{% endblock %}
+
+{% block body %}
+<h1>{{project.name}}</h1>
+<ul>
+  <li> {{ project.commit|codefat }}
+  <li> {{ project.commit|timestamp }}
+</ul>
+<ul>
+  <li><a href="{{ url_for('show_projects') }}">Go 'project list'</a>
+</ul>
+<ul>
+  <li><a href="{{ url_for('update', project_id=project.id) }}" class="btn">Update</a>
+  <li><a href="{{ url_for('delete', project_id=project.id) }}" class="btn">Delete</a>
+</ul>
+<div id="chart_div"></div>
+{% endblock %}

@@ -14,7 +14,7 @@
    </tr>
   {% for project in projects %}
     <tr>
-      <td>{{ project.name }}</td>
+      <td><a href="{{ url_for('project', project_id=project.id) }}">{{ project.name }}</a></td>
       <td>{{ project.commit|codefat }}</td>
       <td>{{ project.commit|timestamp }} </td>
       <td><a href="{{ url_for('update', project_id=project.id) }}" class="btn">Update</a></td>

@@ -1,6 +1,6 @@
 import sqlite3
 from flask import Flask, request, session, g, redirect, url_for, abort,\
-  render_template, flash
+  render_template, flash, jsonify
 from flask_bootstrap import Bootstrap
 from contextlib import closing
 from datetime import datetime
@@ -93,6 +93,18 @@ def clone_repositories():
   flash('Not implemented')
   return redirect(url_for('show_projects'))
 
+class Project(object):
+  @staticmethod
+  def get(project_id):
+    cur = g.db.execute('select id, name from projects order by id desc')
+    row = cur.fetchone()
+    return dict(id=row[0], name=row[1], commit=last_commit(row[0]))
+
+@app.route('/project/<int:project_id>')
+def project(project_id):
+  project = Project.get(project_id)
+  return render_template('project.html', project=project)
+
 @app.route('/update/<int:project_id>')
 def update(project_id):
   git.update(g.db, project_id)
@@ -109,6 +121,16 @@ def update_repositories():
 def delete(project_id):
   git.delete(g.db, project_id)
   return redirect(url_for('show_projects'))
+
+@app.route('/api/project/<int:project_id>')
+def api_project(project_id):
+  cur = g.db.execute('select timestamp, 100*(1-dloc/sloc), sloc from commits where project_id = ? order by timestamp', [project_id])
+  data = dict()
+  data['cols'] = [dict(label='commit', type='datetime'), 
+      dict(label='code fat', type='number'), 
+      dict(label='sloc', type='number')]
+  data['rows'] = [dict(c=[dict(v=row[0]), dict(v=row[1]), dict(v=row[2])]) for row in cur.fetchall()]
+  return jsonify(data)
 
 @app.template_filter('timestamp')
 def format_timestamp(o):
