@@ -3,6 +3,7 @@ from flask import Flask, request, session, g, redirect, url_for, abort,\
   render_template, flash
 from flask_bootstrap import Bootstrap
 from contextlib import closing
+from datetime import datetime
 import time
 import os
 
@@ -45,8 +46,9 @@ def init_db():
 
 def last_commit(id):
   try:
-    cur = g.db.execute('select timestamp from commits where project_id=? order by timestamp desc limit 1', [id])
-    return cur.fetchone()[0]
+    cur = g.db.execute('select id, timestamp, sloc, dloc, cc from commits where project_id=? order by timestamp desc limit 1', [id])
+    row = cur.fetchone()
+    return dict(id=row[0], timestamp=row[1], sloc=row[2], dloc=row[3], cc=row[4])
   except:
     return 0
 
@@ -108,6 +110,15 @@ def delete(project_id):
   git.delete(g.db, project_id)
   return redirect(url_for('show_projects'))
 
+@app.template_filter('datetime')
+def format_timestamp(timestamp):
+  d = datetime.fromtimestamp(timestamp)
+  return d.ctime()
+
+@app.template_filter('codefat')
+def format_timestamp(o):
+  return '%.2f%%' % ((1 - o['dloc']/o['sloc']) * 100)
+    
 
 if __name__ == '__main__':
   app.run()

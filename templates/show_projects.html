@@ -1,6 +1,5 @@
 {% extends "layout.html" %}
 
-
 {% block body %}
   <div>
 	Total: {{ projects|length }} <a href="{{ url_for('update_repositories') }}" class=btn>update</a>
@@ -10,14 +9,14 @@
    <tr>
     <th>Name</th>
     <th>Code Fat</th>
-    <th>Update time</th>
-    <th>Action</th>
+    <th>Last Commit</th>
+    <th>Actions</th>
    </tr>
   {% for project in projects %}
     <tr>
       <td>{{ project.name }}</td>
-      <td>... </td>
-      <td>... </td>
+      <td>{{ project.commit|codefat }}</td>
+      <td>{{ project.commit.timestamp|datetime }} </td>
       <td><a href="{{ url_for('update', project_id=project.id) }}" class="btn">Update</a></td>
       <td><a href="{{ url_for('delete', project_id=project.id) }}" class="btn">Delete</a></td>
     </tr>
