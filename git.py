@@ -2,6 +2,7 @@ import app
 from collections import namedtuple
 from subprocess import call, check_output
 from os import path
+import random
 import re
 import config
 from metr import metr, stat_sum
@@ -40,6 +41,12 @@ class Git(object):
   def rev_parse(self, branch):
     output = check_output(self.base_cmd + ['rev-parse', branch])
     return output.rstrip()
+
+  def rev_list(self, branch):
+    output = check_output(self.base_cmd + ['rev-list', branch])
+    commits = output.splitlines()
+    random.shuffle(commits)
+    return commits[0:10]
 
   def parse_commit(self, commitid):
     "Parse commit object info and return (author,timestamp,parents)"
@@ -103,14 +110,19 @@ def update(db, project_id):
   metr_repository(git, already_processed, after_processing)
 
 def metr_repository(git, already_processed, after_processing):
-  ids = [git.rev_parse('HEAD')]
+  print len(cache)
+  count = 0
+  ids = git.rev_list('HEAD')
   while len(ids) > 0:
-    commitid = ids.pop()
+    commitid = ids.pop(0)
     if already_processed(commitid):
       continue
     commit = metr_commit(commitid, git)
     after_processing(commit)
-    ids += commit.parents
+    count += 1
+    if count > 10:
+      print "break after processing", count, "commits"
+      break
 
 def metr_commit(commitid, git):
   """

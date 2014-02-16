@@ -16,7 +16,7 @@
     <tr>
       <td>{{ project.name }}</td>
       <td>{{ project.commit|codefat }}</td>
-      <td>{{ project.commit.timestamp|datetime }} </td>
+      <td>{{ project.commit|timestamp }} </td>
       <td><a href="{{ url_for('update', project_id=project.id) }}" class="btn">Update</a></td>
       <td><a href="{{ url_for('delete', project_id=project.id) }}" class="btn">Delete</a></td>
     </tr>

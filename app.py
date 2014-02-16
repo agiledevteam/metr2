@@ -50,7 +50,7 @@ def last_commit(id):
     row = cur.fetchone()
     return dict(id=row[0], timestamp=row[1], sloc=row[2], dloc=row[3], cc=row[4])
   except:
-    return 0
+    return None 
 
 @app.route('/')
 def show_projects():
@@ -110,14 +110,21 @@ def delete(project_id):
   git.delete(g.db, project_id)
   return redirect(url_for('show_projects'))
 
-@app.template_filter('datetime')
-def format_timestamp(timestamp):
-  d = datetime.fromtimestamp(timestamp)
-  return d.ctime()
+@app.template_filter('timestamp')
+def format_timestamp(o):
+  if o != None:
+    timestamp = o['timestamp']
+    d = datetime.fromtimestamp(timestamp)
+    return d.ctime()
+  else:
+    return 'N/A'
 
 @app.template_filter('codefat')
 def format_timestamp(o):
-  return '%.2f%%' % ((1 - o['dloc']/o['sloc']) * 100)
+  if o != None:
+    return '%.2f%%' % ((1 - o['dloc']/o['sloc']) * 100)
+  else:
+    return 'N/A'
     
 
 if __name__ == '__main__':
