@@ -54,9 +54,7 @@ def last_commit(id):
 
 @app.route('/')
 def show_projects():
-  cur = g.db.execute('select id, name from projects order by id desc')
-  projects = [dict(id=row[0], name=row[1], commit=last_commit(row[0])) for row in cur.fetchall()]
-  return render_template('show_projects.html', projects=projects)
+  return render_template('show_projects.html', projects=Project.all())
 
 @app.route('/add', methods=['POST'])
 def add_project():
@@ -96,9 +94,14 @@ def clone_repositories():
 class Project(object):
   @staticmethod
   def get(project_id):
-    cur = g.db.execute('select id, name from projects order by id desc')
+    cur = g.db.execute('select id, name from projects where id = ? limit 1', [project_id])
     row = cur.fetchone()
     return dict(id=row[0], name=row[1], commit=last_commit(row[0]))
+  @staticmethod
+  def all():
+    cur = g.db.execute('select id, name from projects order by name')
+    projects = [dict(id=row[0], name=row[1], commit=last_commit(row[0])) for row in cur.fetchall()]
+    return projects
 
 @app.route('/project/<int:project_id>')
 def project(project_id):
@@ -112,9 +115,8 @@ def update(project_id):
 
 @app.route('/updateall')
 def update_repositories():
-  cur = g.db.execute('select id, name, repository, branch from projects order by id desc')
-  for r in cur.fetchall():
-    git.update(g.db, r[0])
+  for p in Project.all():
+    git.update(g.db, p['id'])
   return redirect(url_for('show_projects'))
 
 @app.route('/delete/<int:project_id>')

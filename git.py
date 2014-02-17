@@ -5,7 +5,7 @@ from os import path
 import random
 import re
 import config
-from metr import metr, stat_sum
+from metr import metr, stat_sum, Stat
 
 Commit = namedtuple('Commit', ['sha1', 'author', 'timestamp', 'parents', 'sloc', 'dloc', 'cc'])
 
@@ -126,22 +126,28 @@ def metr_repository(git, already_processed, after_processing):
 
 def metr_commit(commitid, git):
   """
-  Returns commit(author, timestamp, ..., stat), None if 
+  Returns commit , recover parse/metr failure
   """
   author, timestamp, parents = git.parse_commit(commitid)
   print commitid[:7],
   entries = [entry for entry in git.ls_tree(commitid) if not is_test(entry)]
   print len(entries),'file(s) ...',
-  stats = []
-  for entry in entries:
-    if entry.sha1 in cache:
-      stats.append(cache[entry.sha1])
-    else:
-      stat = metr(git.parse_blob(entry.sha1))
-      stats.append(stat)
-      cache[entry.sha1] = stat
-  stat = stat_sum(stats)
-  print 'done'
+  stat = Stat(sloc=0, dloc=0, cc=1)
+  try:
+    stats = []
+    for entry in entries:
+      if entry.sha1 in cache:
+        stats.append(cache[entry.sha1])
+      else:
+        blob = git.parse_blob(entry.sha1)
+        stat_ = metr(blob)
+        cache[entry.sha1] = stat_
+        stats.append(stat_)
+    print "done"
+    stat = stat_sum(stats)
+  except:
+    print "failed"
+    stat = Stat(sloc=0, dloc=0, cc=1)  
   return Commit(commitid, author, timestamp, parents, stat.sloc, stat.dloc, stat.cc)
 
 test_pattern = re.compile('tests?/', re.IGNORECASE)
