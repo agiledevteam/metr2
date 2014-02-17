@@ -12,7 +12,7 @@ os.sys.path.insert(0, 'libs')
 import git
 import config # check if config.py is prepared
 
-DATABASE = '/tmp/metr.db'
+DATABASE = 'metr.db'
 DEBUG = True
 SECRET_KEY = 'development key'
 USERNAME = 'admin'
@@ -56,6 +56,10 @@ def last_commit(id):
 def show_projects():
   return render_template('show_projects.html', projects=Project.all())
 
+@app.route('/users')
+def show_users():
+  return render_template('show_projects.html', projects=Project.all())
+
 @app.route('/add', methods=['POST'])
 def add_project():
   if not session.get('logged_in'):
@@ -92,21 +96,52 @@ def clone_repositories():
   return redirect(url_for('show_projects'))
 
 class Project(object):
+  def __init__(self, id, name):
+    self.id = id
+    self.name = name
+    self.commit = last_commit(id)
+
+  @property
+  def last_update(self):
+    if self.commit != None:
+      return filter_datetime(self.commit['timestamp'])
+    else:
+      return "--"
+
+  @property
+  def codefat(self):
+    if self.commit != None and self.commit['sloc'] != 0:
+      return '%.2f%%' % ((1 - self.commit['dloc']/self.commit['sloc']) * 100)
+    else:
+      return "--"
+
+  @property
+  def sloc(self):
+    if self.commit != None and self.commit['sloc'] != 0:
+      return self.commit['sloc']
+    else:
+      return "--"
+
+  def commits(self, limit = 20):
+    cur = g.db.execute('select sha1, author, timestamp, dloc, sloc from commits where project_id = ? order by timestamp desc limit ?', [self.id, limit])
+    return [dict(id=row[0], author=row[1], timestamp=row[2], dloc=row[3], sloc=row[4]) for row in cur.fetchall() if row[2] > 0]
+
   @staticmethod
   def get(project_id):
     cur = g.db.execute('select id, name from projects where id = ? limit 1', [project_id])
     row = cur.fetchone()
-    return dict(id=row[0], name=row[1], commit=last_commit(row[0]))
+    return Project(id=row[0], name=row[1])
+
   @staticmethod
   def all():
     cur = g.db.execute('select id, name from projects order by name')
-    projects = [dict(id=row[0], name=row[1], commit=last_commit(row[0])) for row in cur.fetchall()]
+    projects = [Project(id=row[0], name=row[1]) for row in cur.fetchall()]
     return projects
 
 @app.route('/project/<int:project_id>')
 def project(project_id):
   project = Project.get(project_id)
-  return render_template('project.html', project=project)
+  return render_template('project.html', project=project,commits=project.commits(20))
 
 @app.route('/update/<int:project_id>')
 def update(project_id):
@@ -131,25 +166,18 @@ def api_project(project_id):
   data['cols'] = [dict(label='commit', type='datetime'), 
       dict(label='code fat', type='number'), 
       dict(label='sloc', type='number')]
-  data['rows'] = [dict(c=[dict(v=row[0]), dict(v=row[1]), dict(v=row[2])]) for row in cur.fetchall()]
+  data['rows'] = [dict(c=[dict(v=row[0]), dict(v=row[1]), dict(v=row[2])]) for row in cur.fetchall() if row[2] > 0]
   return jsonify(data)
 
-@app.template_filter('timestamp')
-def format_timestamp(o):
   if o != None:
     timestamp = o['timestamp']
-    d = datetime.fromtimestamp(timestamp)
-    return d.ctime()
   else:
     return 'N/A'
 
-@app.template_filter('codefat')
-def format_timestamp(o):
-  if o != None:
-    return '%.2f%%' % ((1 - o['dloc']/o['sloc']) * 100)
-  else:
-    return 'N/A'
-    
+@app.template_filter('datetime')
+def filter_datetime(timestamp):
+  d = datetime.fromtimestamp(timestamp)
+  return d.ctime()
 
 if __name__ == '__main__':
   app.run()

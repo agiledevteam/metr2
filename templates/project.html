@@ -1,9 +1,9 @@
-{% extends "layout.html" %}
+{% extends "dashboard.html" %}
 
 {% block head %}
 {{ super() }}
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
-<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 <script type="text/javascript">
 
 // Load the Visualization API and the piechart package.
@@ -47,18 +47,41 @@ function drawChart() {
 </script>
 {% endblock %}
 
-{% block body %}
-<h1>{{project.name}}</h1>
+{% block content %}
+<h1 class="page-header">{{project.name}}</h1>
+<div class="dropdown">
+  <button class="btn dropdown-toggle sr-only" type="button" id="dropdownMenu1" data-toggle="dropdown">
+	  Dropdown 
+	  <span class="caret"></span>
+  </button>
+  <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1">
+	  <li role="presentation"><a role="menuitem" tabindex="-1" href="{{ url_for('update', project_id=project.id) }}">Update</a></li>
+	  <li role="presentation"><a role="menuitem" tabindex="-1" href="{{ url_for('delete', project_id=project.id) }}">Delete</a></li>
+  </ul>
+</div>
 <ul>
-  <li> {{ project.commit|codefat }}
-  <li> {{ project.commit|timestamp }}
-</ul>
-<ul>
-  <li><a href="{{ url_for('show_projects') }}">Go 'project list'</a>
-</ul>
-<ul>
-  <li><a href="{{ url_for('update', project_id=project.id) }}" class="btn">Update</a>
-  <li><a href="{{ url_for('delete', project_id=project.id) }}" class="btn">Delete</a>
+  <li> {{ project.codefat }}
+  <li> {{ project.last_update }}
 </ul>
 <div id="chart_div"></div>
+
+<h2 class="sub-header">Recent Commits</h2>
+<div class="table-responsive">
+	<table class="table table-striped">
+		<thead>
+			<tr>
+				<th>ID</th>
+				<th>Committed</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for commit in commits %}
+			<tr>
+				<td>{{commit.id}}</td>
+				<td>{{commit.author}} {{commit.timestamp|datetime}}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+</div>
 {% endblock %}

@@ -3,3 +3,5 @@ data.py
 *.swp
 *.pyc
 config.py
+*.db
+.DS_Store

@@ -1,27 +1,38 @@
-{% extends "layout.html" %}
+{% extends "dashboard.html" %}
 
-{% block body %}
+{% block content %}
+ <h1 class="page-header">Projects</h1>
   <div>
 	Total: {{ projects|length }} <a href="{{ url_for('update_repositories') }}" class=btn>update</a>
   </div>
 
-  <table class="table">
+  <h2 class="sub-header">List: {{projects|length}} project(s)</h2>
+  <div class="table-responsive">
+  <table class="table table-striped">
+	  <thead>
    <tr>
     <th>Name</th>
     <th>Code Fat</th>
+    <th># of Lines</th>
     <th>Last Commit</th>
     <th>Actions</th>
    </tr>
+   </thead>
+   <tbody>
   {% for project in projects %}
     <tr>
       <td><a href="{{ url_for('project', project_id=project.id) }}">{{ project.name }}</a></td>
-      <td>{{ project.commit|codefat }}</td>
-      <td>{{ project.commit|timestamp }} </td>
-      <td><a href="{{ url_for('update', project_id=project.id) }}" class="btn">Update</a></td>
-      <td><a href="{{ url_for('delete', project_id=project.id) }}" class="btn">Delete</a></td>
+      <td>{{ project.codefat }}</td>
+      <td>{{ project.sloc }} </td>
+      <td>{{ project.last_update }} </td>
+      <td>
+	      <a href="{{ url_for('update', project_id=project.id) }}" class="btn"><span class="glyphicon glyphicon-refresh"></span></a> 
+	      <a href="{{ url_for('delete', project_id=project.id) }}" class="btn"><span class="glyphicon glyphicon-trash"></span></a></td>
     </tr>
   {% else %}
     <tr><td colspan="3">Unbelievable. No entries here so far</td></tr>
   {% endfor %}
+  </tbody>
   </table>
+  </div>
 {% endblock %}

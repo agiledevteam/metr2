@@ -45,8 +45,9 @@ class Git(object):
   def rev_list(self, branch):
     output = check_output(self.base_cmd + ['rev-list', branch])
     commits = output.splitlines()
-    random.shuffle(commits)
-    return commits[0:10]
+    return commits
+    #random.shuffle(commits)
+    #return commits[0:10]
 
   def parse_commit(self, commitid):
     "Parse commit object info and return (author,timestamp,parents)"
@@ -120,9 +121,9 @@ def metr_repository(git, already_processed, after_processing):
     commit = metr_commit(commitid, git)
     after_processing(commit)
     count += 1
-    if count > 10:
-      print "break after processing", count, "commits"
-      break
+  #  if count > 10:
+  #    print "break after processing", count, "commits"
+  #    break
 
 def metr_commit(commitid, git):
   """
@@ -133,21 +134,23 @@ def metr_commit(commitid, git):
   entries = [entry for entry in git.ls_tree(commitid) if not is_test(entry)]
   print len(entries),'file(s) ...',
   stat = Stat(sloc=0, dloc=0, cc=1)
-  try:
-    stats = []
-    for entry in entries:
-      if entry.sha1 in cache:
-        stats.append(cache[entry.sha1])
-      else:
+
+  stats = []
+  for entry in entries:
+    if entry.sha1 in cache:
+      stats.append(cache[entry.sha1])
+    else:
+      try:
         blob = git.parse_blob(entry.sha1)
         stat_ = metr(blob)
         cache[entry.sha1] = stat_
         stats.append(stat_)
+      except:
+        print "failed with", entry
+        break
+  else:
     print "done"
     stat = stat_sum(stats)
-  except:
-    print "failed"
-    stat = Stat(sloc=0, dloc=0, cc=1)  
   return Commit(commitid, author, timestamp, parents, stat.sloc, stat.dloc, stat.cc)
 
 test_pattern = re.compile('tests?/', re.IGNORECASE)
