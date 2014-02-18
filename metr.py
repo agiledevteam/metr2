@@ -1,8 +1,6 @@
 import os
 from collections import namedtuple
 
-if __name__ == '__main__':
-  os.sys.path.insert(0, 'libs')
 import plyj.parser as plyj
 import plyj.model as java
 

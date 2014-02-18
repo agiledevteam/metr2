@@ -5,9 +5,6 @@ from flask_bootstrap import Bootstrap
 from contextlib import closing
 from datetime import datetime
 import time
-import os
-
-os.sys.path.insert(0, 'libs')
 
 import git
 import config # check if config.py is prepared
