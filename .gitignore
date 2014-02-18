@@ -5,3 +5,4 @@ data.py
 config.py
 *.db
 .DS_Store
+*.db-journal

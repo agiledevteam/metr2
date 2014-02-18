@@ -151,7 +151,7 @@ def update(project_id):
 @app.route('/updateall')
 def update_repositories():
   for p in Project.all():
-    git.update(g.db, p['id'])
+    git.update(g.db, p.id)
   return redirect(url_for('show_projects'))
 
 @app.route('/delete/<int:project_id>')
