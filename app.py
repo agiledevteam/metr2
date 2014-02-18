@@ -169,11 +169,6 @@ def api_project(project_id):
   data['rows'] = [dict(c=[dict(v=row[0]), dict(v=row[1]), dict(v=row[2])]) for row in cur.fetchall() if row[2] > 0]
   return jsonify(data)
 
-  if o != None:
-    timestamp = o['timestamp']
-  else:
-    return 'N/A'
-
 @app.template_filter('datetime')
 def filter_datetime(timestamp):
   d = datetime.fromtimestamp(timestamp)
