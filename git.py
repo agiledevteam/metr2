@@ -78,7 +78,7 @@ class Git(object):
     return result
 
   def parse_blob(self, sha1):
-    src = check_output(self.base_cmd + ['cat-file', 'blob', sha1])
+    src = check_output(self.base_cmd + ['cat-file', 'blob', sha1], universal_newlines=True)
     return src
 
 
