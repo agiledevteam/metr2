@@ -156,6 +156,11 @@ def delete(project_id):
   git.delete(g.db, project_id)
   return redirect(url_for('show_projects'))
 
+@app.route('/api/projects')
+def api_projects():
+  data = [p.__dict__ for p in Project.all()]
+  return jsonify(result=data)
+
 @app.route('/api/project/<int:project_id>')
 def api_project(project_id):
   cur = g.db.execute('select timestamp, 100*(1-dloc/sloc), sloc from commits where project_id = ? order by timestamp', [project_id])
