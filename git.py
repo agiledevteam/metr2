@@ -121,9 +121,9 @@ def metr_repository(git, already_processed, after_processing):
     commit = metr_commit(commitid, git)
     after_processing(commit)
     count += 1
-  #  if count > 10:
-  #    print "break after processing", count, "commits"
-  #    break
+    if count > 10:
+      print "break after processing", count, "commits"
+      break
 
 def metr_commit(commitid, git):
   """

@@ -1,5 +1,9 @@
 import os
+import sys
 from collections import namedtuple
+import re
+
+test_pattern = re.compile('tests?$', re.IGNORECASE)
 
 import plyj.parser as plyj
 import plyj.model as java
@@ -210,78 +214,42 @@ class TryStmt(Stmt):
   def children(self):
     return [self.body] + self.catchers + self.finalizer
 
-def test():
-  stat = metr("""
-abstract class BreakWithLabelDemo {
-    public void f();
-    public static void main(String[] args) {
+def find_files(dir):
+  for dirname, dirnames, filenames in os.walk(dir):
+    for filename in filenames:
+      if filename[-5:] != '.java':
+        continue
+      yield os.path.join(dirname, filename)
+    for dir in dirnames:
+      if test_pattern.search(dir) != None:
+        dirnames.remove(dir)
 
-        int[][] arrayOfInts = { 
-            { 32, 87, 3, 589 },
-            { 12, 1076, 2000, 8 },
-            { 622, 127, 77, 955 }
-        };
-        int searchfor = 12;
+def metr_file(arg):
+  f = open(arg,'rU')
+  print arg, metr(f.read())
+  f.close()
+  
+def run_metr(arg):
+  if os.path.isdir(arg):
+    for file in find_files(arg):
+      metr_file(file) 
+  elif os.path.isfile(arg):
+    try:
+      metr_file(arg)
+    except Exception as e:
+      raise
+  else:
+      print "Can't open file/directory : %s" % (arg)
 
-        int i;
-        int j = 0;
-        boolean foundIt = false;
-
-    search:
-        for (i = 0; i < arrayOfInts.length; i++) {
-            for (j = 0; j < arrayOfInts[i].length;
-                 j++) {
-                if (arrayOfInts[i][j] == searchfor) {
-                    foundIt = true;
-                    break search;
-                }
-            }
-        }
-
-        new Runnable() {
-          @Override
-          public void run() {
-             switch (a) {
-             case 1:
-             case 2:
-               break;
-             case 3:
-               {
-                break;
-               }
-             default:
-               break;
-             }
-             synchronized(this) {
-               int a;
-               a = 3;
-               a++;
-             }
-          }
-        }.run();
-
-        if (foundIt) {
-            try {
-             System.out.println("Found " + searchfor + " at " + i + ", " + j);
-            } catch (Exception e) {
-            }
-        } else {
-            try {
-               System.out.println(searchfor + " not in the array");
-            } catch (IOException e) {
-            } catch (Exception e) {
-            } finally {
-               throw new RuntimeError();
-            }
-        }
-    }
-
-}// End of Class""")
-  print stat 
+def main(argv):
+  if len(argv) == 0:
+    print 'No arguments. Specify <dir> or <file>'
+    return
+  else:
+    for a in argv:
+      run_metr(a)
+    
 
 if __name__ == '__main__':
-  print "todo : defaut in switch statement doesn't increase cc "
-  print 'todo : contribute plyj'
-  test()
-
+  main(sys.argv[1:])
 
