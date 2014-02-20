@@ -14,7 +14,7 @@ google.setOnLoadCallback(drawChart);
 
 function drawChart() {
   var json = $.ajax({
-    url: "/api/project/{{project.id}}",
+    url: "/api/project/{{project_id}}",
     dataType:"json",
     async: false
   }).responseText;
@@ -48,37 +48,32 @@ function drawChart() {
 {% endblock %}
 
 {% block content %}
-<h1 class="page-header">{{project.name}}</h1>
-<div class="dropdown">
-  <button class="btn dropdown-toggle sr-only" type="button" id="dropdownMenu1" data-toggle="dropdown">
-	  Dropdown 
-	  <span class="caret"></span>
-  </button>
-  <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1">
-	  <li role="presentation"><a role="menuitem" tabindex="-1" href="{{ url_for('update', project_id=project.id) }}">Update</a></li>
-	  <li role="presentation"><a role="menuitem" tabindex="-1" href="{{ url_for('delete', project_id=project.id) }}">Delete</a></li>
-  </ul>
-</div>
-<ul>
-  <li> {{ project.codefat }}
-  <li> {{ project.last_update }}
+<h1 class="page-header">Commit Info</h1>
+<ul class="list-group">
+  <li class="list-group-item">Project: <a href="{{url_for('project', project_id=project.id)}}">{{project.name}}</a></li>
+  <li class="list-group-item">Author: {{commit.author}}</li>
+  <li class="list-group-item">Code Fat: {{commit.codefat|float2}}%</li>
+  <li class="list-group-item">SLOC: {{commit.sloc}}</li>
 </ul>
 <div id="chart_div"></div>
 
-<h2 class="sub-header">Recent Commits</h2>
+<h2 class="sub-header">File List: {{diffs|length}} file(s) <small>Java files only without tests</small></h2>
 <div class="table-responsive">
 	<table class="table table-striped">
 		<thead>
 			<tr>
-				<th>ID</th>
-				<th>Committed</th>
+				<th>Path</th>
+				<th>SLOC</th>
+				<th>Code Fat</th>
 			</tr>
 		</thead>
 		<tbody>
-			{% for commit in commits %}
+			{% for diff in diffs %}
 			<tr>
-				<td><a href="{{url_for('commit', project_id=project.id,sha1=commit.id)}}">{{commit.id}}</a></td>
-				<td>{{commit.author}} {{commit.timestamp|datetime}}</td>
+				<td> <span class="diff-status-{{diff.status}}" /> {{diff.new.filename}} </td>
+				<td>{{diff.old.sloc}} => {{diff.new.sloc}}</td>
+				<td>{{diff.old.codefat|float2}}% => {{diff.new.codefat|float2}}%</td>
+
 			</tr>
 			{% endfor %}
 		</tbody>

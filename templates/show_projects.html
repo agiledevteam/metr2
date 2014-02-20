@@ -118,7 +118,7 @@ function drawChart() {
       <td><a href="{{ url_for('project', project_id=project.id) }}">{{ project.name }}</a></td>
       <td>{{ project.codefat }}</td>
       <td>{{ project.sloc }} </td>
-      <td>{{ project.last_update }} </td>
+      <td><a href="{{url_for('commit',project_id=project.id)}}">{{ project.last_update }}</a></td>
       <td>
 	      <a href="{{ url_for('update', project_id=project.id) }}" class="btn"><span class="glyphicon glyphicon-refresh"></span></a> 
 	      <a href="{{ url_for('delete', project_id=project.id) }}" class="btn"><span class="glyphicon glyphicon-trash"></span></a></td>
