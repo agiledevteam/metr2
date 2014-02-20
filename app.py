@@ -41,9 +41,9 @@ def init_db():
       db.cursor().executescript(f.read())
     db.commit()
 
-def last_commit(id):
+def last_commit(project_id):
   try:
-    cur = g.db.execute('select id, timestamp, sloc, dloc, cc from commits where project_id=? order by timestamp desc limit 1', [id])
+    cur = g.db.execute('select id, timestamp, sloc, dloc, cc from commits where project_id=? order by timestamp desc limit 1', [project_id])
     row = cur.fetchone()
     return dict(id=row[0], timestamp=row[1], sloc=row[2], dloc=row[3], cc=row[4])
   except:
@@ -189,10 +189,28 @@ def api_project(project_id):
   data['rows'] = [dict(c=[dict(v=row[0]), dict(v=row[1]), dict(v=row[2])]) for row in cur.fetchall() if row[2] > 0]
   return jsonify(data)
 
+@app.template_filter('float2')
+def filter_float2(fvalue):
+  return '%.2f' % fvalue
+
 @app.template_filter('datetime')
 def filter_datetime(timestamp):
   d = datetime.fromtimestamp(timestamp)
   return d.ctime()
+
+@app.route('/commit/<int:project_id>/', defaults=dict(sha1='HEAD'))
+@app.route('/commit/<int:project_id>/<sha1>')
+def commit(project_id, sha1):
+  project = Project.get(project_id)
+  commit = git.get_commit(g.db, project_id, sha1)
+  diffs = git.diff_tree(g.db, project_id, sha1)
+  return render_template('commit.html', project=project, commit=commit, diffs=diffs)
+  
+@app.route('/api/commit/<int:project_id>/', defaults=dict(sha1='HEAD'))
+@app.route('/api/commit/<int:project_id>/<sha1>')
+def api_commit(project_id, sha1):
+  commit = git.get_commit(g.db, project_id, sha1)
+  return jsonify(result=commit)
 
 if __name__ == '__main__':
   app.run()

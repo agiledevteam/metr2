@@ -94,3 +94,16 @@ body {
   display: inline-block;
   border-radius: 50%;
 }
+
+/*
+ * diff status
+ */
+.diff-status-D {
+  color: #bd2c00;
+}
+.diff-status-A {
+  color: #6cc644;
+}
+.diff-status-M {
+  color: #d0b44c;
+}

@@ -7,9 +7,13 @@ import re
 import config
 from metr import metr, stat_sum, Stat
 
+test_pattern = re.compile('tests?/', re.IGNORECASE)
+
 Commit = namedtuple('Commit', ['sha1', 'author', 'timestamp', 'parents', 'sloc', 'dloc', 'cc'])
 
 Entry = namedtuple('Entry', ['sha1', 'filename'])
+
+Diff = namedtuple('Diff', ['new', 'old', 'status'])
 
 class Git(object):
   def __init__(self, repository, gitdir, worktree, branch):
@@ -72,21 +76,36 @@ class Git(object):
     for line in output.splitlines():
       values = line.split()
       sha1, filename = values[2], values[3]
-      name, ext = path.splitext(filename) 
-      if ext == '.java':
+      if self.filter(filename):
         result.append(Entry(sha1, filename))
     return result
-
+  
   def parse_blob(self, sha1):
     src = check_output(self.base_cmd + ['cat-file', 'blob', sha1], universal_newlines=True)
     return src
 
+  def filter(self,filename):
+    name, ext = path.splitext(filename) 
+    return test_pattern.search(filename) == None and ext == ".java"
+   
+  def diff_tree(self, sha1):
+    output = check_output(self.base_cmd + ['diff-tree', '-r', '--root', '-m', '--no-renames', '--no-commit-id', sha1])
+    diff = [] 
+    for line in output.splitlines():
+      values = line.split()
+      oldsha1, newsha1, status, oldfilename = values[2], values[3], values[4], values[5] 
+      if len(values) == 7:
+        newfilename = values[6]
+      else:
+        newfilename = oldfilename 
+      if self.filter(newfilename): 
+        diff.append(Diff(status=status[0], new=dict(filename=newfilename, sha1=newsha1), old=dict(filename=oldfilename, sha1=oldsha1)))
+    return diff
 
-def update(db, project_id):
+def load_git(db, project_id):
   cur = db.execute('select id, name, repository, branch from projects where id = ?', [project_id])
   r = cur.fetchone()
   name, repo, branch = r[1], r[2], r[3]
-  print name, repo, branch
 
   # insert ssh_username 
   if config.SSH_USERNAME != None and config.SSH_USERNAME != "":
@@ -95,8 +114,10 @@ def update(db, project_id):
 
   gitdir = path.join(app.GITDIR, name, '.git')
   worktree = path.join(app.GITDIR, name)
-  git = Git(repo, gitdir, worktree, branch)
+  return Git(repo, gitdir, worktree, branch)
 
+def update(db, project_id):
+  git = load_git(db, project_id)
   git.update()
 
   def already_processed(commitid):
@@ -137,26 +158,28 @@ def metr_commit(commitid, git):
 
   stats = []
   for entry in entries:
-    if entry.sha1 in cache:
-      stats.append(cache[entry.sha1])
-    else:
-      try:
-        blob = git.parse_blob(entry.sha1)
-        stat_ = metr(blob)
-        cache[entry.sha1] = stat_
-        stats.append(stat_)
-      except:
-        print "failed with", entry
-        break
+    try:
+      stats.append(metr_blob(git, entry.sha1))
+    except:
+      print "failed with", entry
+      break
   else:
     print "done"
     stat = stat_sum(stats)
   return Commit(commitid, author, timestamp, parents, stat.sloc, stat.dloc, stat.cc)
 
-test_pattern = re.compile('tests?/', re.IGNORECASE)
-def is_test(entry):
-  return test_pattern.search(entry.filename) != None
-  
+def metr_blob(git, sha1):
+  "May raise exception"
+  if sha1 in cache:
+    return cache[sha1]
+  try: 
+    blob = git.parse_blob(sha1)
+    stat_ = metr(blob)
+    cache[sha1] = stat_
+    return stat_
+  except:
+    return Stat(sloc=0,dloc=0,cc=1)
+
 # todo change this into MRU cache 
 cache = dict()
   
@@ -166,4 +189,36 @@ def delete(db, project_id):
   r = cur.fetchone()
   print "delete ..." + path.join(app.GITDIR,r[1])
   call(["rm","-rf",path.join(app.GITDIR,r[1])])
+
+def ls_tree(db, project_id, sha1):
+  "Returns file list of sha1 commit in project_id project"
+  git = load_git(db, project_id)
+  files = git.ls_tree(sha1)
+  return [dict(f._asdict()) for f in files]
+
+def diff_tree(db, project_id, sha1):
+  git = load_git(db, project_id)
+  def metr_file(file):
+    stat = metr_blob(git, file['sha1'])
+    file['sloc'] = stat.sloc
+    file['dloc'] = stat.dloc
+    file['codefat'] = codefat(stat)
+    return file
+  diffs = git.diff_tree(sha1)
+  return [dict(status=diff.status, old=metr_file(diff.old), new=metr_file(diff.new)) for diff in diffs]
+
+def codefat(stat):
+  if stat.sloc == 0:
+    return 0
+  else:
+    return 100 * (1-stat.dloc/stat.sloc)
+
+def get_commit(db, project_id, sha1):
+  if sha1 == 'HEAD':
+    cur = db.execute('select id,project_id,author,timestamp,sha1,sloc,dloc,100*(1-dloc/sloc) from commits where project_id=? order by timestamp desc limit 1', [project_id])
+  else:
+    cur = db.execute('select id,project_id,author,timestamp,sha1,sloc,dloc,100*(1-dloc/sloc) from commits where sha1 like ?', [sha1 + '%'])
+  row = cur.fetchone()
+  commit = dict(id=row[0],project_id=row[1],author=row[2],timestamp=row[3],sha1=row[4],sloc=row[5],dloc=row[6],codefat=row[7])
+  return commit
 
