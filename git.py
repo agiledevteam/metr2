@@ -78,7 +78,7 @@ class Git(object):
     return result
 
   def parse_blob(self, sha1):
-    src = check_output(self.base_cmd + ['cat-file', 'blob', sha1])
+    src = check_output(self.base_cmd + ['cat-file', 'blob', sha1], universal_newlines=True)
     return src
 
 
@@ -121,9 +121,9 @@ def metr_repository(git, already_processed, after_processing):
     commit = metr_commit(commitid, git)
     after_processing(commit)
     count += 1
-#    if count > 1:
-#      print "break after processing", count, "commits"
-#      break
+    if count > 10:
+      print "break after processing", count, "commits"
+      break
 
 def metr_commit(commitid, git):
   """

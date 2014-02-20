@@ -5,9 +5,6 @@ from flask_bootstrap import Bootstrap
 from contextlib import closing
 from datetime import datetime
 import time
-import os
-
-os.sys.path.insert(0, 'libs')
 
 import git
 import config # check if config.py is prepared
@@ -177,6 +174,11 @@ def delete(project_id):
   git.delete(g.db, project_id)
   return redirect(url_for('show_projects'))
 
+@app.route('/api/projects')
+def api_projects():
+  data = [p.__dict__ for p in Project.all()]
+  return jsonify(result=data)
+
 @app.route('/api/project/<int:project_id>')
 def api_project(project_id):
   cur = g.db.execute('select timestamp, 100*(1-dloc/sloc), sloc from commits where project_id = ? order by timestamp', [project_id])
@@ -186,11 +188,6 @@ def api_project(project_id):
       dict(label='sloc', type='number')]
   data['rows'] = [dict(c=[dict(v=row[0]), dict(v=row[1]), dict(v=row[2])]) for row in cur.fetchall() if row[2] > 0]
   return jsonify(data)
-
-  if o != None:
-    timestamp = o['timestamp']
-  else:
-    return 'N/A'
 
 @app.template_filter('datetime')
 def filter_datetime(timestamp):
