@@ -152,7 +152,7 @@ def metr_commit(commitid, git):
   """
   author, timestamp, parents = git.parse_commit(commitid)
   print commitid[:7],
-  entries = [entry for entry in git.ls_tree(commitid) if not is_test(entry)]
+  entries = git.ls_tree(commitid)
   print len(entries),'file(s) ...',
   stat = Stat(sloc=0, dloc=0, cc=1)
 

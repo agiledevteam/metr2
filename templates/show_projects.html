@@ -18,7 +18,9 @@ $.ajax({
 }).done(function(json) {
   projects = json.result;
   for (var i in projects) {
-    if (projects[i].commit.sloc < 1000) 
+    if (projects[i].commit == null || 
+     projects[i].commit.sloc == null || 
+     projects[i].commit.sloc < 1000) 
       continue;
     sloc += projects[i].commit.sloc;
     dloc += projects[i].commit.dloc;
@@ -26,7 +28,7 @@ $.ajax({
   if (sloc != 0) {
     codefat = (100 * (1 - dloc/sloc));
   }
-  $('#project_count')[0].innerText = 'We are tracking' + projects.length + ' project(s).';
+  $('#project_count')[0].innerText = 'We are tracking ' + projects.length + ' project(s).';
   var integral = (codefat).toFixed(0) 
   var fractional = ((codefat - Math.floor(codefat))*100).toFixed(0)
   $('#project_codefat')[0].innerHTML = integral + "<small>." + fractional + "%</small>";

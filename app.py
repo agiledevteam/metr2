@@ -63,9 +63,18 @@ class User(object):
 
 @app.route('/users')
 def show_users():
-  cur = g.db.execute('select author, count(*) from commits group by author')
-  
-  users = [User(email=row[0], no_commits=row[1], projects=Project.user_projects(row[0])) for row in cur.fetchall()]
+  cur = g.db.execute('select id, name from projects order by name')
+  all_projects = dict()
+  for row in cur.fetchall():
+    all_projects[row[0]] = dict(id=row[0], name=row[1]) 
+
+  cur = g.db.execute('select author, count(*), group_concat(project_id, " ") from commits group by author')
+  users = []
+  for row in cur.fetchall():
+    email = row[0]
+    no_commits = row[1]
+    projects = [all_projects[int(project_id)] for project_id in set(row[2].split())]
+    users.append(User(email, no_commits, projects))
   return render_template('show_users.html', users=users)
 
 @app.route('/add', methods=['POST'])
@@ -191,7 +200,10 @@ def api_project(project_id):
 
 @app.template_filter('float2')
 def filter_float2(fvalue):
-  return '%.2f' % fvalue
+  if isinstance(fvalue, float):
+    return '%.2f' % fvalue
+  else:
+    return "--"
 
 @app.template_filter('datetime')
 def filter_datetime(timestamp):
