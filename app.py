@@ -56,9 +56,20 @@ def last_commit(id):
 def show_projects():
   return render_template('show_projects.html', projects=Project.all())
 
+
+class User(object):
+  def __init__(self, email, no_commits, projects):
+    self.email = email
+    self.no_commits = no_commits
+    self.projects = projects
+
+
 @app.route('/users')
 def show_users():
-  return render_template('show_projects.html', projects=Project.all())
+  cur = g.db.execute('select author, count(*) from commits group by author')
+  
+  users = [User(email=row[0], no_commits=row[1], projects=Project.user_projects(row[0])) for row in cur.fetchall()]
+  return render_template('show_users.html', users=users)
 
 @app.route('/add', methods=['POST'])
 def add_project():
@@ -137,6 +148,13 @@ class Project(object):
     cur = g.db.execute('select id, name from projects order by name')
     projects = [Project(id=row[0], name=row[1]) for row in cur.fetchall()]
     return projects
+  
+  @staticmethod
+  def user_projects(author):
+    cur = g.db.execute('select project_id from commits where author = ? group by project_id',[author])
+    project_id = [ row[0] for row in cur.fetchall() ]
+    projects = [ Project.get(i) for i in project_id ]
+    return projects     
 
 @app.route('/project/<int:project_id>')
 def project(project_id):
