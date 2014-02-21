@@ -3,9 +3,7 @@ from flask import Flask, request, session, g, redirect, url_for, abort,\
   render_template, flash, jsonify
 from flask_bootstrap import Bootstrap
 from contextlib import closing
-from datetime import datetime
-import time
-
+from datetime import datetime, date, time, timedelta
 import git
 import config # check if config.py is prepared
 
@@ -223,6 +221,37 @@ def commit(project_id, sha1):
 def api_commit(project_id, sha1):
   commit = git.get_commit(g.db, project_id, sha1)
   return jsonify(result=commit)
+
+def gather_stats(day, project_ids):
+  now = datetime.now()
+  dt = now - timedelta(days=day)
+  sloc = 0
+  dloc = 0
+  for project_id in project_ids:
+    cur = g.db.execute('select sloc, dloc from commits where project_id = ? and timestamp < ? order by timestamp desc limit 1', [project_id, int(dt.strftime("%s"))])
+    row = cur.fetchone()
+    if row != None and row[0] > 1000:
+      sloc += row[0]
+      dloc += row[1]
+  if sloc == 0:
+    return (-day, 0, 0)
+  else:
+    return (-day, 100 * (1-dloc/sloc), sloc)
+
+@app.route('/api/trend')
+def api_trend():
+  # all project
+  cur = g.db.execute('select id from projects order by name')
+  project_ids = [row[0] for row in cur.fetchall()]
+
+  now = datetime.now()
+  days = ((now - timedelta(days=day)) for day in range(30))
+  stats = []
+  for day in range(30):
+    # for each project gather last commit 
+     stats.append(gather_stats(day, project_ids))
+  return jsonify(result=stats)
+
 
 if __name__ == '__main__':
   app.run()

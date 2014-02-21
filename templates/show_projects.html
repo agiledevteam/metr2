@@ -43,23 +43,21 @@ $.ajax({
 google.load('visualization', '1', {'packages':['corechart']});
 
 // Set a callback to run when the Google Visualization API is loaded.
-google.setOnLoadCallback(drawChart);
+google.setOnLoadCallback(function () { 
+  $.ajax({ 
+    url: "/api/trend", 
+    dataType:"json", 
+    success: drawChart});
+});
 
-function drawChart() {
-  
-  var json = $.ajax({
-    url: "/api/project/1",
-    dataType:"json",
-    async: false
-  }).responseText;
-
-  json = jQuery.parseJSON(json);
-  for ( var i = 0; i < json.rows.length; i++ ) { 
-        json.rows[i].c[0].v = new Date( json.rows[i].c[0].v * 1000 );
-  }
+function drawChart(json) {
+	console.log(json);
   // Create our data table out of JSON data loaded from server.
-  var data = new google.visualization.DataTable(json);
-
+  var data = new google.visualization.DataTable();
+  data.addColumn('number', 'day');
+  data.addColumn('number', 'Code Fat');
+  data.addColumn('number', 'SLOC');
+  data.addRows(json['result']);
   var options = {
     series:{1:{targetAxisIndex:1}},
     vAxes:[
