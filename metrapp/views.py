@@ -33,7 +33,7 @@ def last_commit(project_id):
     return None 
 
 @app.route('/')
-def show_projects():
+def projects():
   projects=Project.all()
   def summary():
     sloc = 0
@@ -42,11 +42,11 @@ def show_projects():
       sloc0, dloc0 = p.metr() 
       sloc += sloc0
       dloc += dloc0
-    codefat = 100 * (1 - dloc/sloc)
+    codefat = 100 * (1 - dloc/sloc) if sloc != 0 else .0
     codefat_s = "%.2f" % codefat
     codefat_i, codefat_f = codefat_s.split(".")
     return dict(codefat_i=codefat_i,codefat_f=codefat_f,total_sloc=sloc)
-  return render_template('show_projects.html',projects=projects,summary=summary())
+  return render_template('projects.html',projects=projects,summary=summary())
 
 class User(object):
   def __init__(self, email, no_commits, projects):
@@ -55,7 +55,7 @@ class User(object):
     self.projects = projects
 
 @app.route('/users')
-def show_users():
+def users():
   cur = g.db.execute('select id, name from projects order by name')
   all_projects = dict()
   for row in cur.fetchall():
@@ -68,7 +68,7 @@ def show_users():
     no_commits = row[1]
     projects = [all_projects[int(project_id)] for project_id in set(row[2].split())]
     users.append(User(email, no_commits, projects))
-  return render_template('show_users.html', users=users)
+  return render_template('users.html', users=users)
 
 @app.route('/add', methods=['POST'])
 def add_project():
@@ -78,7 +78,7 @@ def add_project():
     [request.form['name'], request.form['repository'], request.form['branch']])
   g.db.commit()
   flash('New project was successfully added')
-  return redirect(url_for('show_projects'))
+  return redirect(url_for('projects'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -91,19 +91,19 @@ def login():
     else:
       session['logged_in'] = True
       flash('You were loggined in')
-      return redirect(url_for('show_projects'))
+      return redirect(url_for('projects'))
   return render_template('login.html', error=error)
 
 @app.route('/logout')
 def logout():
   session.pop('logged_in', None)
   flash('You were logged out')
-  return redirect(url_for('show_projects'))
+  return redirect(url_for('projects'))
 
 @app.route('/clone')
 def clone_repositories():
   flash('Not implemented')
-  return redirect(url_for('show_projects'))
+  return redirect(url_for('projects'))
 
 class Project(object):
   def __init__(self, id, name):
@@ -169,18 +169,18 @@ def project(project_id):
 @app.route('/update/<int:project_id>')
 def update(project_id):
   git.update(g.db, project_id)
-  return redirect(url_for('show_projects'))
+  return redirect(url_for('projects'))
 
 @app.route('/updateall')
 def update_repositories():
   for p in Project.all():
     git.update(g.db, p.id)
-  return redirect(url_for('show_projects'))
+  return redirect(url_for('projects'))
 
 @app.route('/delete/<int:project_id>')
 def delete(project_id):
   git.delete(g.db, project_id)
-  return redirect(url_for('show_projects'))
+  return redirect(url_for('projects'))
 
 @app.route('/api/projects')
 def api_projects():
