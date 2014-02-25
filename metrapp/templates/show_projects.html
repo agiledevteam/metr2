@@ -6,39 +6,6 @@
 <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 <script type="text/javascript">
 
-var projects = [];
-var codefat = 0;
-var sloc = 0;
-var dloc = 0;
-$(function(){
-$.ajax({
-  url:"{{url_for('api_projects')}}",
-  context: document.body,
-  dataType: "json"
-}).done(function(json) {
-  projects = json.result;
-  for (var i in projects) {
-    if (projects[i].commit == null || 
-     projects[i].commit.sloc == null || 
-     projects[i].commit.sloc < 1000) 
-      continue;
-    sloc += projects[i].commit.sloc;
-    dloc += projects[i].commit.dloc;
-  }
-  if (sloc != 0) {
-    codefat = (100 * (1 - dloc/sloc));
-  }
-  $('#project_count')[0].innerText = 'We are tracking ' + projects.length + ' project(s).';
-  var integral = (codefat).toFixed(0) 
-  var fractional = ((codefat - Math.floor(codefat))*100).toFixed(0)
-  $('#project_codefat')[0].innerHTML = integral + "<small>." + fractional + "%</small>";
-  $('#total_sloc')[0].innerText = (sloc).toFixed(2);
-  $('#total_dloc')[0].innerText = (dloc).toFixed(2);
-  
-});
-});
-
-
 // Load the Visualization API and the piechart package.
 google.load('visualization', '1', {'packages':['corechart']});
 
@@ -88,13 +55,13 @@ function drawChart(json) {
  <div class="container">
    <div class="row">
      <div class="col-md-4">
-<ul class="list-group">
-<li class="list-group-item">Code Fat: <span id="project_codefat" style="font-size: 5em;"></span> </li>
-<li class="list-group-item">Total SLOC: <span id="total_sloc"></span> </li>
-<li class="list-group-item">Total DLOC: <span id="total_dloc"></span> </li>
-</ul>
+       <ul class="list-group">
+         <li class="list-group-item">Code Fat: <span style="font-size: 5em;">{{summary.codefat_i}}<small>.{{summary.codefat_f}}%</small></span> </li>
+         <li class="list-group-item">Total SLOC: {{summary.total_sloc}} </li>
+       </ul>
      </div>
      <div class="col-md-8" id="chart_div">
+	     loading..
      </div>
    </div>
    

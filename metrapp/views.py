@@ -4,7 +4,8 @@ import sqlite3
 from flask import request, session, g, redirect, url_for, abort,\
   render_template, flash, jsonify
 from contextlib import closing
-from datetime import datetime, date, time, timedelta
+from datetime import datetime, date, timedelta
+import time
 import git
 
 
@@ -25,23 +26,33 @@ def connect_db():
 
 def last_commit(project_id):
   try:
-    cur = g.db.execute('select id, timestamp, sloc, dloc, cc from commits where project_id=? order by timestamp desc limit 1', [project_id])
+    cur = g.db.execute('select id, timestamp, sloc, dloc from commits where project_id=? order by timestamp desc limit 1', [project_id])
     row = cur.fetchone()
-    return dict(id=row[0], timestamp=row[1], sloc=row[2], dloc=row[3], cc=row[4])
+    return dict(id=row[0], timestamp=row[1], sloc=row[2], dloc=row[3])
   except:
     return None 
 
 @app.route('/')
 def show_projects():
-  return render_template('show_projects.html', projects=Project.all())
-
+  projects=Project.all()
+  def summary():
+    sloc = 0
+    dloc = 0
+    for p in projects:
+      sloc0, dloc0 = p.metr() 
+      sloc += sloc0
+      dloc += dloc0
+    codefat = 100 * (1 - dloc/sloc)
+    codefat_s = "%.2f" % codefat
+    codefat_i, codefat_f = codefat_s.split(".")
+    return dict(codefat_i=codefat_i,codefat_f=codefat_f,total_sloc=sloc)
+  return render_template('show_projects.html',projects=projects,summary=summary())
 
 class User(object):
   def __init__(self, email, no_commits, projects):
     self.email = email
     self.no_commits = no_commits
     self.projects = projects
-
 
 @app.route('/users')
 def show_users():
@@ -114,6 +125,12 @@ class Project(object):
     else:
       return "--"
 
+  def metr(self):
+    if self.commit != None:
+      return (self.commit['sloc'], self.commit['dloc'])
+    else:
+      return (0, 0)
+    
   @property
   def sloc(self):
     if self.commit != None and self.commit['sloc'] != 0:
@@ -206,17 +223,38 @@ def api_commit(project_id, sha1):
   commit = git.get_commit(g.db, project_id, sha1)
   return jsonify(result=commit)
 
-def gather_stats(day, project_ids):
-  now = datetime.now()
-  dt = now - timedelta(days=day)
+CACHE_DAILY = dict()
+
+def metr_day_project(by_when, project_id):
+  "return (sloc, dloc)"
+  def update():
+    cur = g.db.execute('select sloc, dloc from commits where project_id = ? and timestamp < ? order by timestamp desc limit 1', [project_id, by_when])
+    row = cur.fetchone()
+    if row != None and row[0] > 0: 
+      return (row[0], row[1])
+    else:
+      return (0, 0)
+
+  key = (project_id, by_when) 
+  if key in CACHE_DAILY:
+    return CACHE_DAILY[key]
+  else:
+    result = update()
+    CACHE_DAILY[key] = result
+    return result
+
+def metr_day_projects(day, project_ids):
+  "return (day, codefat, sloc)"
+  by_day = date.today() + timedelta(days = 1 - day)
+  by_when = time.mktime(by_day.timetuple())
+  
   sloc = 0
   dloc = 0
   for project_id in project_ids:
-    cur = g.db.execute('select sloc, dloc from commits where project_id = ? and timestamp < ? order by timestamp desc limit 1', [project_id, int(dt.strftime("%s"))])
-    row = cur.fetchone()
-    if row != None and row[0] > 1000:
-      sloc += row[0]
-      dloc += row[1]
+    sloc0, dloc0 = metr_day_project(by_when, project_id)
+    sloc += sloc0
+    dloc += dloc0
+
   if sloc == 0:
     return (-day, 0, 0)
   else:
@@ -229,11 +267,7 @@ def api_trend():
   project_ids = [row[0] for row in cur.fetchall()]
 
   now = datetime.now()
-  days = ((now - timedelta(days=day)) for day in range(30))
-  stats = []
-  for day in range(30):
-    # for each project gather last commit 
-     stats.append(gather_stats(day, project_ids))
+  stats = [metr_day_projects(day, project_ids) for day in range(30)]
   return jsonify(result=stats)
 
 
