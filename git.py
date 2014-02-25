@@ -213,6 +213,9 @@ def codefat(stat):
   else:
     return 100 * (1-stat.dloc/stat.sloc)
 
+def get_parents(db, project_id, sha1):
+  return [""]
+  
 def get_commit(db, project_id, sha1):
   if sha1 == 'HEAD':
     cur = db.execute('select id,project_id,author,timestamp,sha1,sloc,dloc,100*(1-dloc/sloc) from commits where project_id=? order by timestamp desc limit 1', [project_id])

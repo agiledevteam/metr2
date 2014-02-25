@@ -1,0 +1,28 @@
+{% extends "dashboard.html" %}
+
+{% block content %}
+<h1 class="page-header"><small>User</small> {{user.email}} </h1>
+
+<h2 class="sub-header">Commits by {{user.email}}</h2>
+  <div class="table-responsive">
+  <table class="table table-striped">
+   <thead>
+   <tr>
+     <th>ID</th>
+     <th>Project</th>
+     <th>&Delta;SLOC</th>
+     <th>&Delta;FLOC</th>
+   </tr>
+   </thead>
+   <tbody>
+  {% for c in commits %}
+    <tr>
+      <td><a href="{{url_for('commit', project_id=c.project_id, sha1=c.id)}}">{{c.id}}</a></td>
+      <td><a href="{{url_for('project', project_id=c.project_id)}}" class="label label-default">{{c.project_name}}</a></td>
+      <td>{{c.delta_sloc}}</td>
+      <td>{{c.delta_floc}}</td>
+  {% endfor %}
+  </tbody>
+  </table>
+  </div>
+{% endblock %}

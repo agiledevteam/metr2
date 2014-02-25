@@ -272,5 +272,22 @@ def api_trend():
   stats = [metr_day_projects(day, project_ids) for day in range(30)]
   return jsonify(result=stats)
 
+def update_delta(commit):
+  project_id = commit['project_id']
+  sha1 = commit['id']
+  parents = git.get_parents(g.db, project_id, sha1)
+  for parent_id in parents:
+    parent_commit = git.get_commit(g.db, project_id, parent_id)
+    commit['delta_sloc'] = 0
+    commit['delta_floc'] = 0
+
+@app.route('/user/<email>')
+def user(email):
+  cur = g.db.execute('select c.sha1,p.name,p.id,c.sloc,c.dloc from commits c, projects p  where c.project_id=p.id and c.author=?', [email])
+  commits = [dict(id=row[0],project_name=row[1],project_id=row[2],sloc=row[3],dloc=row[4]) for row in cur.fetchall()]
+  for commit in commits:
+    update_delta(commit)
+  user = dict(email=email)
+  return render_template('user.html', user=user, commits=commits)
 
 
