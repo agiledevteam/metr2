@@ -1,4 +1,4 @@
-import app
+from metrapp import app
 from collections import namedtuple
 from subprocess import call, check_output
 from os import path

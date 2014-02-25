@@ -1,22 +1,12 @@
+from metrapp import app
+
 import sqlite3
-from flask import Flask, request, session, g, redirect, url_for, abort,\
+from flask import request, session, g, redirect, url_for, abort,\
   render_template, flash, jsonify
-from flask_bootstrap import Bootstrap
 from contextlib import closing
 from datetime import datetime, date, time, timedelta
 import git
-import config # check if config.py is prepared
 
-DATABASE = 'metr.db'
-DEBUG = True
-SECRET_KEY = 'development key'
-USERNAME = 'admin'
-PASSWORD = 'default'
-GITDIR = 'git'
-
-app = Flask(__name__)
-app.config.from_object(__name__)
-Bootstrap(app)
 
 @app.before_request
 def before_request():
@@ -32,12 +22,6 @@ def teardown_request(exception):
 
 def connect_db():
   return sqlite3.connect(app.config['DATABASE'])
-
-def init_db():
-  with closing(connect_db()) as db:
-    with app.open_resource('schema.sql', mode='r') as f:
-      db.cursor().executescript(f.read())
-    db.commit()
 
 def last_commit(project_id):
   try:
@@ -253,6 +237,4 @@ def api_trend():
   return jsonify(result=stats)
 
 
-if __name__ == '__main__':
-  app.run()
 
