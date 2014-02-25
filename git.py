@@ -112,8 +112,8 @@ def load_git(db, project_id):
     parts = repo.split("//")
     repo = parts[0] + "//" + config.SSH_USERNAME + "@" + parts[1]
 
-  gitdir = path.join(app.GITDIR, name, '.git')
-  worktree = path.join(app.GITDIR, name)
+  gitdir = path.join(app.config['GITDIR'], name, '.git')
+  worktree = path.join(app.config['GITDIR'], name)
   return Git(repo, gitdir, worktree, branch)
 
 def update(db, project_id):
@@ -187,8 +187,8 @@ cache = dict()
 def delete(db, project_id):
   cur = db.execute('select id, name, repository, branch from projects where id = ?',[project_id])
   r = cur.fetchone()
-  print "delete ..." + path.join(app.GITDIR,r[1])
-  call(["rm","-rf",path.join(app.GITDIR,r[1])])
+  print "delete ..." + path.join(app.config['GITDIR'],r[1])
+  call(["rm","-rf",path.join(app.config['GITDIR'],r[1])])
 
 def ls_tree(db, project_id, sha1):
   "Returns file list of sha1 commit in project_id project"
