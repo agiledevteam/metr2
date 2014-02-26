@@ -14,7 +14,7 @@ class UnicodeTest(unittest.TestCase):
         self.db.close()
         
     def testInsertUnicodeCharInEmail(self):
-        email = u'“jooyung.han@lge.com”'.encode('utf-8')
+        email = u'“jooyung.han@lge.com”'
         self.db.execute("insert into projects (name, repository, branch) values ('test', 'test', 'test')")
         self.db.execute("insert into commits (sha1, project_id, author) values ('', 0, ?)", [email])
 

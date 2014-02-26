@@ -67,7 +67,7 @@ class Git(object):
         author, timestamp = values[-3].strip('<>').lower(), int(values[-2])
       elif values[0] == 'parent':
         parents += [values[1]]
-    return author, timestamp, parents
+    return author.decode('utf-8'), timestamp, parents
 
   def ls_tree(self, treeish):
     """ Returns list of Entry(sha1, name) """
