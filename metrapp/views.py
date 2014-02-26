@@ -22,7 +22,9 @@ def teardown_request(exception):
   db.close()
 
 def connect_db():
-  return sqlite3.connect(app.config['DATABASE'])
+  db = sqlite3.connect(app.config['DATABASE'])
+  db.text_factory = str
+  return db
 
 def last_commit(project_id):
   try:
