@@ -1,6 +1,7 @@
-import app
+from metrapp import app
+from metrapp.views import *
 
-with app.app.app_context():
-  app.before_request()
-  app.update_repositories()
-  app.teardown_request()
+with app.app_context():
+  before_request()
+  update_repositories()
+  teardown_request()
