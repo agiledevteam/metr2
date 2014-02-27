@@ -58,6 +58,7 @@ function drawChart(json) {
        <ul class="list-group">
          <li class="list-group-item">Code Fat: <span style="font-size: 5em;">{{summary.codefat_i}}<small>.{{summary.codefat_f}}%</small></span> </li>
          <li class="list-group-item">Total SLOC: {{summary.total_sloc}} </li>
+         <li class="list-group-item">Total FLOC: {{summary.total_floc}} </li>
        </ul>
      </div>
      <div class="col-md-8" id="chart_div">
@@ -83,7 +84,7 @@ function drawChart(json) {
   {% for project in projects %}
     <tr>
       <td><a href="{{ url_for('project', project_id=project.id) }}">{{ project.name }}</a></td>
-      <td>{{ project.codefat }}</td>
+      <td>{{ project.codefat|round(2)}}%</td>
       <td>{{ project.sloc }} </td>
       <td><a href="{{url_for('commit',project_id=project.id)}}">{{ project.last_update }}</a></td>
       <td>

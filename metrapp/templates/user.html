@@ -12,15 +12,17 @@
      <th>Project</th>
      <th>&Delta;SLOC</th>
      <th>&Delta;FLOC</th>
+     <th>&Delta;Code Fat</th>
    </tr>
    </thead>
    <tbody>
   {% for c in commits %}
     <tr>
-      <td><a href="{{url_for('commit', project_id=c.project_id, sha1=c.id)}}">{{c.id}}</a></td>
+      <td><a class='sha1' href="{{url_for('commit', project_id=c.project_id, sha1=c.sha1)}}">{{c.sha1|truncate(7,True,'')}}</a></td>
       <td><a href="{{url_for('project', project_id=c.project_id)}}" class="label label-default">{{c.project_name}}</a></td>
       <td>{{c.delta_sloc}}</td>
-      <td>{{c.delta_floc}}</td>
+      <td>{{c.delta_floc|round(2)}}</td>
+      <td>{{c.delta_codefat|round(2)}}%</td>
   {% endfor %}
   </tbody>
   </table>

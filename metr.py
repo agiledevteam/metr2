@@ -16,14 +16,12 @@ def metr(input):
   return stat_sum(exe.stat() for exe in exes)
 
 def stat_sum(stats):
-  cc = 0
   sloc = 0
-  dloc = 0
+  floc = 0
   for stat in stats:
-    cc += stat.cc -1
     sloc += stat.sloc
-    dloc += stat.dloc
-  return Stat(cc+1, sloc, dloc) 
+    floc += stat.floc
+  return Stat(sloc, floc) 
 
 def find_executables(tree):
   visitor = TreeVisitor(False)
@@ -79,14 +77,16 @@ def toStmt(stmt):
   else:
     return Stmt()
 
-Stat = namedtuple('Stat', ['cc', 'sloc', 'dloc'])
+Stat = namedtuple('Stat', ['sloc', 'floc'])
 
 class Executable(object):
   def __init__(self, body):
     self.body = body
   def stat(self):
 #    self.body.dump()
-    return Stat(self.cc(), self.sloc(), self.dloc())
+    sloc = self.sloc()
+    dloc = self.dloc()
+    return Stat(sloc, sloc-dloc)
   def cc(self):
     return self.body.cc() + 1
   def sloc(self):

@@ -9,7 +9,7 @@ from metr import metr, stat_sum, Stat
 
 test_pattern = re.compile('tests?/', re.IGNORECASE)
 
-Commit = namedtuple('Commit', ['sha1', 'author', 'timestamp', 'parents', 'sloc', 'dloc', 'cc'])
+Commit = namedtuple('Commit', ['sha1', 'author', 'timestamp', 'message', 'parents', 'sloc', 'floc', 'codefat'])
 
 Entry = namedtuple('Entry', ['sha1', 'filename'])
 
@@ -54,20 +54,28 @@ class Git(object):
     #return commits[0:10]
 
   def parse_commit(self, commitid):
-    "Parse commit object info and return (author,timestamp,parents)"
+    "Parse commit object info and return (author,timestamp,message,parents)"
     obj = check_output(self.base_cmd + ['log', '-1', '--pretty=raw', commitid])
+    lines = obj.splitlines()
+    print lines
+    index = lines.index('')
+    message = '\n'.join(lines[index+1:])
+
     author = 'unknown'
     timestamp = 0
     parents = []
-    for line in obj.splitlines():
-      if line == "":
-        break
+    for line in lines[:index]:
+      print '---', line
       values = line.split()
       if values[0] == 'author':
         author, timestamp = values[-3].strip('<>').lower(), int(values[-2])
       elif values[0] == 'parent':
         parents += [values[1]]
-    return author.decode('utf-8'), timestamp, parents
+    if timestamp == 0:
+        a = None
+        a.split()
+        print obj
+    return author.decode('utf-8'), timestamp, message, " ".join(parents)
 
   def ls_tree(self, treeish):
     """ Returns list of Entry(sha1, name) """
@@ -126,7 +134,8 @@ def update(db, project_id):
     return row[0] > 0
 
   def after_processing(commit):
-    db.execute('insert into commits (project_id, author, timestamp, sha1, sloc, dloc, cc) values (?,?,?,?,?,?,?)', [project_id, commit.author, commit.timestamp, commit.sha1, commit.sloc, commit.dloc, commit.cc])
+    db.execute('insert into commits (project_id, author, timestamp, message, parents, sha1, sloc, floc, codefat) values (?,?,?,?,?,?,?,?,?)', 
+            [project_id, commit.author, commit.timestamp, commit.message, commit.parents, commit.sha1, commit.sloc, commit.floc, commit.codefat])
     db.commit()
 
   metr_repository(git, already_processed, after_processing)
@@ -150,11 +159,11 @@ def metr_commit(commitid, git):
   """
   Returns commit , recover parse/metr failure
   """
-  author, timestamp, parents = git.parse_commit(commitid)
+  author, timestamp, message, parents = git.parse_commit(commitid)
   print commitid[:7],
   entries = git.ls_tree(commitid)
   print len(entries),'file(s) ...',
-  stat = Stat(sloc=0, dloc=0, cc=1)
+  stat = Stat(sloc=0, floc=0)
 
   stats = []
   for entry in entries:
@@ -166,7 +175,7 @@ def metr_commit(commitid, git):
   else:
     print "done"
     stat = stat_sum(stats)
-  return Commit(commitid, author, timestamp, parents, stat.sloc, stat.dloc, stat.cc)
+  return Commit(commitid, author, timestamp, message, parents, stat.sloc, stat.floc, codefat(stat))
 
 def metr_blob(git, sha1):
   "May raise exception"
@@ -178,7 +187,7 @@ def metr_blob(git, sha1):
     cache[sha1] = stat_
     return stat_
   except:
-    return Stat(sloc=0,dloc=0,cc=1)
+    return Stat(sloc=0,floc=0)
 
 # todo change this into MRU cache 
 cache = dict()
@@ -201,7 +210,7 @@ def diff_tree(db, project_id, sha1):
   def metr_file(file):
     stat = metr_blob(git, file['sha1'])
     file['sloc'] = stat.sloc
-    file['dloc'] = stat.dloc
+    file['floc'] = stat.floc
     file['codefat'] = codefat(stat)
     return file
   diffs = git.diff_tree(sha1)
@@ -211,17 +220,19 @@ def codefat(stat):
   if stat.sloc == 0:
     return 0
   else:
-    return 100 * (1-stat.dloc/stat.sloc)
+    return 100 * stat.floc/stat.sloc
 
 def get_parents(db, project_id, sha1):
   return [""]
   
 def get_commit(db, project_id, sha1):
   if sha1 == 'HEAD':
-    cur = db.execute('select id,project_id,author,timestamp,sha1,sloc,dloc,100*(1-dloc/sloc) from commits where project_id=? order by timestamp desc limit 1', [project_id])
+    cur = db.execute('select id,project_id,author,timestamp,message,parents,sha1,sloc,floc,codefat from commits where project_id=? order by timestamp desc limit 1', [project_id])
   else:
-    cur = db.execute('select id,project_id,author,timestamp,sha1,sloc,dloc,100*(1-dloc/sloc) from commits where sha1 like ?', [sha1 + '%'])
+    cur = db.execute('select id,project_id,author,timestamp,message,parents,sha1,sloc,floc,codefat from commits where sha1 like ?', [sha1 + '%'])
   row = cur.fetchone()
-  commit = dict(id=row[0],project_id=row[1],author=row[2],timestamp=row[3],sha1=row[4],sloc=row[5],dloc=row[6],codefat=row[7])
+  message = row[4]
+  parents = row[5].split() if row[5] != None else []
+  commit = dict(id=row[0],project_id=row[1],author=row[2],timestamp=row[3],message=message,parents=parents,sha1=row[6],sloc=row[7],floc=row[8],codefat=row[9])
   return commit
 

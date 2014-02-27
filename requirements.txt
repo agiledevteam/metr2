@@ -3,8 +3,12 @@ Flask-Bootstrap==3.1.1.1
 Jinja2==2.7.2
 MarkupSafe==0.18
 Werkzeug==0.9.4
+coverage==3.7.1
+hiredis==0.1.2
 itsdangerous==0.23
 ply==3.4
+plyj==0.0.1
 py==1.4.20
 pytest==2.5.2
+redis==2.9.1
 wsgiref==0.1.2

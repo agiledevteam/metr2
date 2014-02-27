@@ -107,3 +107,8 @@ body {
 .diff-status-M {
   color: #d0b44c;
 }
+
+.sha1 {
+  font-family:monospace;
+}
+

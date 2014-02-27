@@ -31,8 +31,6 @@ function drawChart() {
     vAxes:[
       {
       title:'code fat',
-//      viewWindowMode: 'explicit',
-//      viewWindow:{max:50, min:0}
       }, 
       {title:'sloc',textStyle:{color: 'red'}} // Axis 1
            ],
@@ -49,36 +47,42 @@ function drawChart() {
 
 {% block content %}
 <h1 class="page-header">{{project.name}}</h1>
-<div class="dropdown">
-  <button class="btn dropdown-toggle sr-only" type="button" id="dropdownMenu1" data-toggle="dropdown">
-	  Dropdown 
-	  <span class="caret"></span>
-  </button>
-  <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1">
-	  <li role="presentation"><a role="menuitem" tabindex="-1" href="{{ url_for('update', project_id=project.id) }}">Update</a></li>
-	  <li role="presentation"><a role="menuitem" tabindex="-1" href="{{ url_for('delete', project_id=project.id) }}">Delete</a></li>
-  </ul>
-</div>
-<ul>
-  <li> {{ project.codefat }}
-  <li> {{ project.last_update }}
-</ul>
-<div id="chart_div"></div>
-
+ <div class="container">
+  <div class="row">
+   <div class="col-md-4">
+    <ul class="list-group">
+     <li class="list-group-item">Code Fat: <span style="font-size: 5em;">{{summary.codefat_i}}<small>.{{summary.codefat_f}}%</small></span> </li>
+     <li class="list-group-item">Total SLOC: {{summary.total_sloc}} </li>
+     <li class="list-group-item">Total FLOC: {{summary.total_floc}} </li>
+    </ul>
+   </div>
+   <div class="col-md-8" id="chart_div">
+        loading..
+   </div>
+  </div>
+ </div>
 <h2 class="sub-header">Recent Commits</h2>
 <div class="table-responsive">
 	<table class="table table-striped">
 		<thead>
 			<tr>
 				<th>ID</th>
-				<th>Committed</th>
+				<th>Committed by</th>
+				<th>When</th>
+				<th>&Delta;SLOC</th>
+				<th>&Delta;FLOC</th>
+				<th>&Delta;Code Fat</th>
 			</tr>
 		</thead>
 		<tbody>
 			{% for commit in commits %}
 			<tr>
-				<td><a href="{{url_for('commit', project_id=project.id,sha1=commit.id)}}">{{commit.id}}</a></td>
-				<td><a href="{{url_for('user', email=commit.author)}}">{{commit.author}}</a> {{commit.timestamp|datetime}}</td>
+				<td><a class="sha1" href="{{url_for('commit', project_id=project.id,sha1=commit.sha1)}}">{{commit.sha1|truncate(7,True,'')}}</a></td>
+				<td><a href="{{url_for('user', email=commit.author)}}">{{commit.author}}</a></td>
+				<td>{{commit.timestamp|datetime}}</td>
+				<td>{{commit.delta_sloc}}</td>
+				<td>{{commit.delta_floc|round(2)}}</td>
+				<td>{{commit.delta_codefat|round(2)}}%</td>
 			</tr>
 			{% endfor %}
 		</tbody>

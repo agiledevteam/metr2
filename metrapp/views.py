@@ -7,6 +7,8 @@ from contextlib import closing
 from datetime import datetime, date, timedelta
 import time
 import git
+from redis import Redis
+import pickle
 
 
 @app.before_request
@@ -27,9 +29,9 @@ def connect_db():
 
 def last_commit(project_id):
   try:
-    cur = g.db.execute('select id, timestamp, sloc, dloc from commits where project_id=? order by timestamp desc limit 1', [project_id])
+    cur = g.db.execute('select id, timestamp, sloc, floc from commits where project_id=? order by timestamp desc limit 1', [project_id])
     row = cur.fetchone()
-    return dict(id=row[0], timestamp=row[1], sloc=row[2], dloc=row[3])
+    return dict(id=row[0], timestamp=row[1], sloc=row[2], floc=row[3])
   except:
     return None 
 
@@ -38,15 +40,15 @@ def projects():
   projects=Project.all()
   def summary():
     sloc = 0
-    dloc = 0
+    floc = 0
     for p in projects:
-      sloc0, dloc0 = p.metr() 
+      sloc0, floc0 = p.metr() 
       sloc += sloc0
-      dloc += dloc0
-    codefat = 100 * (1 - dloc/sloc) if sloc != 0 else .0
+      floc += floc0
+    codefat = 100 * (floc/sloc) if sloc != 0 else .0
     codefat_s = "%.2f" % codefat
     codefat_i, codefat_f = codefat_s.split(".")
-    return dict(codefat_i=codefat_i,codefat_f=codefat_f,total_sloc=sloc)
+    return dict(codefat_i=codefat_i,codefat_f=codefat_f,total_sloc=sloc,total_floc="%.2f" % floc)
   return render_template('projects.html',projects=projects,summary=summary())
 
 class User(object):
@@ -122,26 +124,32 @@ class Project(object):
   @property
   def codefat(self):
     if self.commit != None and self.commit['sloc'] != 0:
-      return '%.2f%%' % ((1 - self.commit['dloc']/self.commit['sloc']) * 100)
+      return 100*self.commit['floc']/self.commit['sloc']
     else:
-      return "--"
+      return 0
 
   def metr(self):
     if self.commit != None:
-      return (self.commit['sloc'], self.commit['dloc'])
+      return (self.commit['sloc'], self.commit['floc'])
     else:
       return (0, 0)
     
   @property
   def sloc(self):
-    if self.commit != None and self.commit['sloc'] != 0:
+    if self.commit != None:
       return self.commit['sloc']
     else:
-      return "--"
+      return 0 
 
   def commits(self, limit = 20):
-    cur = g.db.execute('select sha1, author, timestamp, dloc, sloc from commits where project_id = ? order by timestamp desc limit ?', [self.id, limit])
-    return [dict(id=row[0], author=row[1], timestamp=row[2], dloc=row[3], sloc=row[4]) for row in cur.fetchall() if row[2] > 0]
+    def safe(val):
+      if val == None:
+	return 0
+      else:
+	return val
+
+    cur = g.db.execute('select sha1, author, timestamp, delta_floc, delta_sloc, delta_codefat from commits where project_id = ? order by timestamp desc limit ?', [self.id, limit])
+    return [dict(sha1=row[0], author=row[1], timestamp=row[2], delta_floc=safe(row[3]), delta_sloc=safe(row[4]), delta_codefat=safe(row[5])) for row in cur.fetchall() if row[2] > 0]
 
   @staticmethod
   def get(project_id):
@@ -165,7 +173,13 @@ class Project(object):
 @app.route('/project/<int:project_id>')
 def project(project_id):
   project = Project.get(project_id)
-  return render_template('project.html', project=project,commits=project.commits(20))
+  def summary():
+    sloc, floc = project.metr()
+    codefat = 100 * (floc/sloc) if sloc != 0 else .0
+    codefat_s = "%.2f" % codefat
+    codefat_i, codefat_f = codefat_s.split(".")
+    return dict(codefat_i=codefat_i,codefat_f=codefat_f,total_sloc=sloc,total_floc="%.2f" % floc)
+  return render_template('project.html', project=project, summary=summary(), commits=project.commits(20))
 
 @app.route('/update/<int:project_id>')
 def update(project_id):
@@ -190,7 +204,7 @@ def api_projects():
 
 @app.route('/api/project/<int:project_id>')
 def api_project(project_id):
-  cur = g.db.execute('select timestamp, 100*(1-dloc/sloc), sloc from commits where project_id = ? order by timestamp', [project_id])
+  cur = g.db.execute('select timestamp, codefat, sloc from commits where project_id = ? order by timestamp', [project_id])
   data = dict()
   data['cols'] = [dict(label='commit', type='datetime'), 
       dict(label='code fat', type='number'), 
@@ -224,24 +238,25 @@ def api_commit(project_id, sha1):
   commit = git.get_commit(g.db, project_id, sha1)
   return jsonify(result=commit)
 
-CACHE_DAILY = dict()
+redis = Redis()
 
 def metr_day_project(by_when, project_id):
-  "return (sloc, dloc)"
+  "return (sloc, floc)"
   def update():
-    cur = g.db.execute('select sloc, dloc from commits where project_id = ? and timestamp < ? order by timestamp desc limit 1', [project_id, by_when])
+    cur = g.db.execute('select sloc, floc from commits where project_id = ? and timestamp < ? order by timestamp desc limit 1', [project_id, by_when])
     row = cur.fetchone()
     if row != None and row[0] > 0: 
       return (row[0], row[1])
     else:
       return (0, 0)
 
-  key = (project_id, by_when) 
-  if key in CACHE_DAILY:
-    return CACHE_DAILY[key]
+  key = "codefat:%d:%d" % (project_id, by_when) 
+
+  if redis.exists(key):
+    return pickle.loads(redis.get(key))    
   else:
     result = update()
-    CACHE_DAILY[key] = result
+    redis.set(key, pickle.dumps(result))
     return result
 
 def metr_day_projects(day, project_ids):
@@ -250,16 +265,16 @@ def metr_day_projects(day, project_ids):
   by_when = time.mktime(by_day.timetuple())
   
   sloc = 0
-  dloc = 0
+  floc = 0
   for project_id in project_ids:
-    sloc0, dloc0 = metr_day_project(by_when, project_id)
+    sloc0, floc0 = metr_day_project(by_when, project_id)
     sloc += sloc0
-    dloc += dloc0
+    floc += floc0
 
   if sloc == 0:
     return (-day, 0, 0)
   else:
-    return (-day, 100 * (1-dloc/sloc), sloc)
+    return (-day, 100 * (floc/sloc), sloc)
 
 @app.route('/api/trend')
 def api_trend():
@@ -273,7 +288,7 @@ def api_trend():
 
 def update_delta(commit):
   project_id = commit['project_id']
-  sha1 = commit['id']
+  sha1 = commit['sha1']
   parents = git.get_parents(g.db, project_id, sha1)
   for parent_id in parents:
     parent_commit = git.get_commit(g.db, project_id, parent_id)
@@ -282,8 +297,8 @@ def update_delta(commit):
 
 @app.route('/user/<email>')
 def user(email):
-  cur = g.db.execute('select c.sha1,p.name,p.id,c.sloc,c.dloc from commits c, projects p  where c.project_id=p.id and c.author=?', [email])
-  commits = [dict(id=row[0],project_name=row[1],project_id=row[2],sloc=row[3],dloc=row[4]) for row in cur.fetchall()]
+  cur = g.db.execute('select c.sha1, p.name, p.id, c.delta_sloc, c.delta_floc, c.delta_codefat, c.timestamp from commits c, projects p  where c.project_id=p.id and c.author=? order by c.timestamp desc limit 20', [email])
+  commits = [dict(sha1=row[0], project_name=row[1], project_id=row[2], delta_sloc=row[3], delta_floc=row[4], delta_codefat=row[5], timestamp=row[6]) for row in cur.fetchall()]
   for commit in commits:
     update_delta(commit)
   user = dict(email=email)
