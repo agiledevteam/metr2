@@ -51,7 +51,7 @@ function drawChart() {
 <h1 class="page-header">Commit Info</h1>
 <ul class="list-group">
   <li class="list-group-item">Project: <a href="{{url_for('project', project_id=project.id)}}">{{project.name}}</a></li>
-  <li class="list-group-item">Author: {{commit.author}}</li>
+  <li class="list-group-item">Author: <a href="{{url_for('user', email=commit.author)}}">{{commit.author}}</a></li>
   <li class="list-group-item">Code Fat: {{commit.codefat|float2}}%</li>
   <li class="list-group-item">SLOC: {{commit.sloc}}</li>
 </ul>
