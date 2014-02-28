@@ -57,7 +57,6 @@ class Git(object):
     "Parse commit object info and return (author,timestamp,message,parents)"
     obj = check_output(self.base_cmd + ['log', '-1', '--pretty=raw', commitid])
     lines = obj.splitlines()
-    print lines
     index = lines.index('')
     message = '\n'.join(lines[index+1:])
 
@@ -65,17 +64,12 @@ class Git(object):
     timestamp = 0
     parents = []
     for line in lines[:index]:
-      print '---', line
       values = line.split()
       if values[0] == 'author':
         author, timestamp = values[-3].strip('<>').lower(), int(values[-2])
       elif values[0] == 'parent':
         parents += [values[1]]
-    if timestamp == 0:
-        a = None
-        a.split()
-        print obj
-    return author.decode('utf-8'), timestamp, message, " ".join(parents)
+    return decode(author), timestamp, decode(message), " ".join(parents)
 
   def ls_tree(self, treeish):
     """ Returns list of Entry(sha1, name) """
@@ -235,4 +229,14 @@ def get_commit(db, project_id, sha1):
   parents = row[5].split() if row[5] != None else []
   commit = dict(id=row[0],project_id=row[1],author=row[2],timestamp=row[3],message=message,parents=parents,sha1=row[6],sloc=row[7],floc=row[8],codefat=row[9])
   return commit
+
+def decode(s):
+  try:
+    return s.decode('utf-8')
+  except:
+    try:
+      return s.decode('euc-kr')
+    except:
+      return s.decode('utf-8', errors='ignore')
+    
 

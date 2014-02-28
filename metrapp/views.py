@@ -11,25 +11,32 @@ from redis import Redis
 import pickle
 
 
-@app.before_request
-def before_request():
-  g.db = connect_db()
-
-class Closer(object):
-  def close(self): pass
-
-@app.teardown_request
-def teardown_request(exception):
-  db = getattr(g, 'db', Closer())
-  db.close()
+# Database stuff
 
 def connect_db():
   db = sqlite3.connect(app.config['DATABASE'])
   return db
 
+def get_db():
+  db = getattr(g, '_database', None)
+  if db is None:
+    db = g.db = connect_db()
+  return db
+
+@app.before_request
+def before_request():
+  get_db()
+
+@app.teardown_request
+def teardown_request(exception):
+  db = getattr(g, 'db', None)
+  if db is not None:
+    db.close()
+
+
 def last_commit(project_id):
   try:
-    cur = g.db.execute('select id, timestamp, sloc, floc from commits where project_id=? order by timestamp desc limit 1', [project_id])
+    cur = get_db().execute('select id, timestamp, sloc, floc from commits where project_id=? order by timestamp desc limit 1', [project_id])
     row = cur.fetchone()
     return dict(id=row[0], timestamp=row[1], sloc=row[2], floc=row[3])
   except:
@@ -59,12 +66,12 @@ class User(object):
 
 @app.route('/users')
 def users():
-  cur = g.db.execute('select id, name from projects order by name')
+  cur = get_db().execute('select id, name from projects order by name')
   all_projects = dict()
   for row in cur.fetchall():
     all_projects[row[0]] = dict(id=row[0], name=row[1]) 
 
-  cur = g.db.execute('select author, count(*), group_concat(project_id, " ") from commits group by author')
+  cur = get_db().execute('select author, count(*), group_concat(project_id, " ") from commits group by author')
   users = []
   for row in cur.fetchall():
     email = row[0]
@@ -77,9 +84,9 @@ def users():
 def add_project():
   if not session.get('logged_in'):
     abort(401)
-  g.db.execute('insert into projects (name, repository, branch) values (?, ?, ?)',
+  get_db().execute('insert into projects (name, repository, branch) values (?, ?, ?)',
     [request.form['name'], request.form['repository'], request.form['branch']])
-  g.db.commit()
+  get_db().commit()
   flash('New project was successfully added')
   return redirect(url_for('projects'))
 
@@ -148,24 +155,24 @@ class Project(object):
       else:
 	return val
 
-    cur = g.db.execute('select sha1, author, timestamp, delta_floc, delta_sloc, delta_codefat from commits where project_id = ? order by timestamp desc limit ?', [self.id, limit])
+    cur = get_db().execute('select sha1, author, timestamp, delta_floc, delta_sloc, delta_codefat from commits where project_id = ? order by timestamp desc limit ?', [self.id, limit])
     return [dict(sha1=row[0], author=row[1], timestamp=row[2], delta_floc=safe(row[3]), delta_sloc=safe(row[4]), delta_codefat=safe(row[5])) for row in cur.fetchall() if row[2] > 0]
 
   @staticmethod
   def get(project_id):
-    cur = g.db.execute('select id, name from projects where id = ? limit 1', [project_id])
+    cur = get_db().execute('select id, name from projects where id = ? limit 1', [project_id])
     row = cur.fetchone()
     return Project(id=row[0], name=row[1])
 
   @staticmethod
   def all():
-    cur = g.db.execute('select id, name from projects order by name')
+    cur = get_db().execute('select id, name from projects order by name')
     projects = [Project(id=row[0], name=row[1]) for row in cur.fetchall()]
     return projects
   
   @staticmethod
   def user_projects(author):
-    cur = g.db.execute('select project_id from commits where author = ? group by project_id',[author])
+    cur = get_db().execute('select project_id from commits where author = ? group by project_id',[author])
     project_id = [ row[0] for row in cur.fetchall() ]
     projects = [ Project.get(i) for i in project_id ]
     return projects     
@@ -183,18 +190,18 @@ def project(project_id):
 
 @app.route('/update/<int:project_id>')
 def update(project_id):
-  git.update(g.db, project_id)
+  git.update(get_db(), project_id)
   return redirect(url_for('projects'))
 
 @app.route('/updateall')
 def update_repositories():
   for p in Project.all():
-    git.update(g.db, p.id)
+    git.update(get_db(), p.id)
   return redirect(url_for('projects'))
 
 @app.route('/delete/<int:project_id>')
 def delete(project_id):
-  git.delete(g.db, project_id)
+  git.delete(get_db(), project_id)
   return redirect(url_for('projects'))
 
 @app.route('/api/projects')
@@ -204,7 +211,7 @@ def api_projects():
 
 @app.route('/api/project/<int:project_id>')
 def api_project(project_id):
-  cur = g.db.execute('select timestamp, codefat, sloc from commits where project_id = ? order by timestamp', [project_id])
+  cur = get_db().execute('select timestamp, codefat, sloc from commits where project_id = ? order by timestamp', [project_id])
   data = dict()
   data['cols'] = [dict(label='commit', type='datetime'), 
       dict(label='code fat', type='number'), 
@@ -228,14 +235,14 @@ def filter_datetime(timestamp):
 @app.route('/commit/<int:project_id>/<sha1>')
 def commit(project_id, sha1):
   project = Project.get(project_id)
-  commit = git.get_commit(g.db, project_id, sha1)
-  diffs = git.diff_tree(g.db, project_id, sha1)
+  commit = git.get_commit(get_db(), project_id, sha1)
+  diffs = git.diff_tree(get_db(), project_id, sha1)
   return render_template('commit.html', project=project, commit=commit, diffs=diffs)
   
 @app.route('/api/commit/<int:project_id>/', defaults=dict(sha1='HEAD'))
 @app.route('/api/commit/<int:project_id>/<sha1>')
 def api_commit(project_id, sha1):
-  commit = git.get_commit(g.db, project_id, sha1)
+  commit = git.get_commit(get_db(), project_id, sha1)
   return jsonify(result=commit)
 
 redis = Redis()
@@ -243,7 +250,7 @@ redis = Redis()
 def metr_day_project(by_when, project_id):
   "return (sloc, floc)"
   def update():
-    cur = g.db.execute('select sloc, floc from commits where project_id = ? and timestamp < ? order by timestamp desc limit 1', [project_id, by_when])
+    cur = get_db().execute('select sloc, floc from commits where project_id = ? and timestamp < ? order by timestamp desc limit 1', [project_id, by_when])
     row = cur.fetchone()
     if row != None and row[0] > 0: 
       return (row[0], row[1])
@@ -279,7 +286,7 @@ def metr_day_projects(day, project_ids):
 @app.route('/api/trend')
 def api_trend():
   # all project
-  cur = g.db.execute('select id from projects order by name')
+  cur = get_db().execute('select id from projects order by name')
   project_ids = [row[0] for row in cur.fetchall()]
 
   now = datetime.now()
@@ -289,15 +296,15 @@ def api_trend():
 def update_delta(commit):
   project_id = commit['project_id']
   sha1 = commit['sha1']
-  parents = git.get_parents(g.db, project_id, sha1)
+  parents = git.get_parents(get_db(), project_id, sha1)
   for parent_id in parents:
-    parent_commit = git.get_commit(g.db, project_id, parent_id)
+    parent_commit = git.get_commit(get_db(), project_id, parent_id)
     commit['delta_sloc'] = 0
     commit['delta_floc'] = 0
 
 @app.route('/user/<email>')
 def user(email):
-  cur = g.db.execute('select c.sha1, p.name, p.id, c.delta_sloc, c.delta_floc, c.delta_codefat, c.timestamp from commits c, projects p  where c.project_id=p.id and c.author=? order by c.timestamp desc limit 20', [email])
+  cur = get_db().execute('select c.sha1, p.name, p.id, c.delta_sloc, c.delta_floc, c.delta_codefat, c.timestamp from commits c, projects p  where c.project_id=p.id and c.author=? order by c.timestamp desc limit 20', [email])
   commits = [dict(sha1=row[0], project_name=row[1], project_id=row[2], delta_sloc=row[3], delta_floc=row[4], delta_codefat=row[5], timestamp=row[6]) for row in cur.fetchall()]
   for commit in commits:
     update_delta(commit)
