@@ -15,7 +15,7 @@ def update_commit(db, id, project, g, sha1):
     db.commit()
 
 def empty_message_commits(db):
-    cur = db.execute('select id, project_id, sha1 from commits where message is null order by timestamp desc limit 1000')
+    cur = db.execute('select id, project_id, sha1 from commits where message is null order by timestamp desc')
     return [(row[0], row[1], row[2]) for row in cur.fetchall()]
 
 with app.app_context():

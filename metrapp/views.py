@@ -148,7 +148,7 @@ class Project(object):
     else:
       return 0 
 
-  def commits(self, limit = 100):
+  def commits(self, limit = 1000):
     cur = get_db().execute('select sha1, author, timestamp, delta_floc, delta_sloc, delta_codefat from commits where project_id = ? order by timestamp desc limit ?', [self.id, limit])
     return [dict(sha1=row[0], author=row[1], timestamp=row[2], delta_floc=safe(row[3]), delta_sloc=safe(row[4]), delta_codefat=safe(row[5])) for row in cur.fetchall() if row[2] > 0]
 
@@ -286,6 +286,10 @@ def api_trend():
   now = datetime.now()
   stats = [metr_day_projects(day, project_ids) for day in range(90)]
   return jsonify(result=stats)
+
+@app.route('/diff/<old>/<new>')
+def diff(old, new):
+  return '<h1>not supported yet</h1>'
 
 @app.route('/user/<email>')
 def user(email):

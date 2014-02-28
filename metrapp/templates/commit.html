@@ -81,7 +81,7 @@ function drawChart() {
 		<tbody>
 			{% for diff in diffs %}
 			<tr>
-				<td> <span class="diff-status-{{diff.status}}" /> {{diff.new.filename}} </td>
+				<td> <a href='{{url_for('diff', old=diff.old.sha1, new=diff.new.sha1)}}' class="diff-status-{{diff.status}}"> {{diff.new.filename}} </a></td>
 				<td>{{diff.old.sloc}} => {{diff.new.sloc}}</td>
 				<td>{{diff.old.codefat|float2}}% => {{diff.new.codefat|float2}}%</td>
 
