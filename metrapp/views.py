@@ -284,7 +284,7 @@ def api_trend():
   project_ids = [row[0] for row in cur.fetchall()]
 
   now = datetime.now()
-  stats = [metr_day_projects(day, project_ids) for day in range(30)]
+  stats = [metr_day_projects(day, project_ids) for day in range(90)]
   return jsonify(result=stats)
 
 @app.route('/user/<email>')
