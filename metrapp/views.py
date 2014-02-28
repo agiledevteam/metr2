@@ -148,13 +148,7 @@ class Project(object):
     else:
       return 0 
 
-  def commits(self, limit = 20):
-    def safe(val):
-      if val == None:
-	return 0
-      else:
-	return val
-
+  def commits(self, limit = 100):
     cur = get_db().execute('select sha1, author, timestamp, delta_floc, delta_sloc, delta_codefat from commits where project_id = ? order by timestamp desc limit ?', [self.id, limit])
     return [dict(sha1=row[0], author=row[1], timestamp=row[2], delta_floc=safe(row[3]), delta_sloc=safe(row[4]), delta_codefat=safe(row[5])) for row in cur.fetchall() if row[2] > 0]
 
@@ -186,7 +180,7 @@ def project(project_id):
     codefat_s = "%.2f" % codefat
     codefat_i, codefat_f = codefat_s.split(".")
     return dict(codefat_i=codefat_i,codefat_f=codefat_f,total_sloc=sloc,total_floc="%.2f" % floc)
-  return render_template('project.html', project=project, summary=summary(), commits=project.commits(20))
+  return render_template('project.html', project=project, summary=summary(), commits=project.commits())
 
 @app.route('/update/<int:project_id>')
 def update(project_id):
@@ -293,22 +287,32 @@ def api_trend():
   stats = [metr_day_projects(day, project_ids) for day in range(30)]
   return jsonify(result=stats)
 
-def update_delta(commit):
-  project_id = commit['project_id']
-  sha1 = commit['sha1']
-  parents = git.get_parents(get_db(), project_id, sha1)
-  for parent_id in parents:
-    parent_commit = git.get_commit(get_db(), project_id, parent_id)
-    commit['delta_sloc'] = 0
-    commit['delta_floc'] = 0
-
 @app.route('/user/<email>')
 def user(email):
-  cur = get_db().execute('select c.sha1, p.name, p.id, c.delta_sloc, c.delta_floc, c.delta_codefat, c.timestamp from commits c, projects p  where c.project_id=p.id and c.author=? order by c.timestamp desc limit 20', [email])
-  commits = [dict(sha1=row[0], project_name=row[1], project_id=row[2], delta_sloc=row[3], delta_floc=row[4], delta_codefat=row[5], timestamp=row[6]) for row in cur.fetchall()]
-  for commit in commits:
-    update_delta(commit)
+  cur = get_db().execute("""select
+      c.sha1, p.name, p.id,
+      c.sloc, c.delta_sloc, c.floc, c.delta_floc, c.codefat, c.delta_codefat, 
+      c.timestamp, c.parents 
+          from projects p,commits c
+          where c.project_id = p.id and c.author = ? order by c.timestamp desc""",
+   [email])
+  commits = [dict(sha1=row[0],
+      project_name=row[1],
+      project_id=row[2], 
+      sloc=row[3], 
+      delta_sloc=row[4], 
+      floc=safe(row[5]),
+      delta_floc=safe(row[6]),
+      codefat=safe(row[7]),
+      delta_codefat=safe(row[8]), 
+      timestamp=row[9],
+      parents=row[10]) for row in cur.fetchall()]
   user = dict(email=email)
   return render_template('user.html', user=user, commits=commits)
 
 
+def safe(val):
+  if val == None:
+    return 0
+  else:
+    return val
