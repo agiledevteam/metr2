@@ -10,9 +10,18 @@ import plyj.model as java
 
 parser = plyj.Parser()
 
+debug = False
+
+def print_exes(exes):
+  for exe in exes:
+    exe.dump()
+
 def metr(input):
+  global debug
   tree = parser.parse_string(input)
   exes = find_executables(tree)
+  if debug:
+    print_exes(exes)
   return stat_sum(exe.stat() for exe in exes)
 
 def stat_sum(stats):
@@ -35,11 +44,11 @@ class TreeVisitor(java.Visitor):
 
   def visit_MethodDeclaration(self, decl):
     if decl.body != None:
-      self.exes.append(Executable(toStmt(decl.body)))
+      self.exes.append(Executable(decl.name, toStmt(decl.body)))
     return True
 
   def visit_ConstructorDeclaration(self, decl):
-    self.exes.append(Executable(toStmt(decl.block)))
+    self.exes.append(Executable(decl.name, toStmt(decl.block)))
     return True
   
   def executables(self):
@@ -80,10 +89,10 @@ def toStmt(stmt):
 Stat = namedtuple('Stat', ['sloc', 'floc'])
 
 class Executable(object):
-  def __init__(self, body):
+  def __init__(self, name, body):
+    self.name = name
     self.body = body
   def stat(self):
-#    self.body.dump()
     sloc = self.sloc()
     dloc = self.dloc()
     return Stat(sloc, sloc-dloc)
@@ -93,6 +102,9 @@ class Executable(object):
     return self.body.loc(1)
   def dloc(self):
     return self.body.loc(0.5)
+  def dump(self):
+    print self.name
+    self.body.dump()
 
 class Stmt(object):
   def __init__(self, name = 'other'):
@@ -251,5 +263,9 @@ def main(argv):
     
 
 if __name__ == '__main__':
-  main(sys.argv[1:])
+  if sys.argv[1] == '-d':
+    debug = True
+    main(sys.argv[2:])
+  else:
+    main(sys.argv[1:])
 
