@@ -78,7 +78,7 @@ function drawChart() {
 			{% for commit in commits %}
 			<tr>
 				<td><a class="sha1" href="{{url_for('commit', project_id=project.id,sha1=commit.sha1)}}">{{commit.sha1|truncate(7,True,'')}}</a></td>
-				<td><a href="{{url_for('user', email=commit.author)}}">{{commit.author}}</a></td>
+				<td><a href="{{url_for('user', author=commit.author)}}">{{commit.author}}</a></td>
 				<td>{{commit.timestamp|datetime}}</td>
 				<td>{{commit.delta_sloc}}</td>
 				<td>{{commit.delta_floc|round(2)}}</td>

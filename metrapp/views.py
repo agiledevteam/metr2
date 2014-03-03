@@ -60,20 +60,8 @@ def projects():
 
 @app.route('/users')
 def users():
-  cur = get_db().execute('select id, name from projects order by name')
-  all_projects = dict()
-  for row in cur.fetchall():
-    all_projects[row[0]] = dict(id=row[0], name=row[1]) 
-
-  cur = get_db().execute('select author, count(*), group_concat(project_id, " "), sum(delta_sloc), sum(delta_floc) from commits group by author')
-  users = []
-  for row in cur.fetchall():
-    email = row[0]
-    no_commits = row[1]
-    projects = [all_projects[int(project_id)] for project_id in set(row[2].split())]
-    sum_delta_sloc = row[3]
-    sum_delta_floc = row[4]
-    users.append(dict(email=email, no_commits=no_commits, projects=projects, sum_delta_sloc=sum_delta_sloc, sum_delta_floc=sum_delta_floc))
+  users = get_users()
+  map_project_ids_to_projects(users)
   return render_template('users.html', users=users)
 
 @app.route('/add', methods=['POST'])
@@ -144,10 +132,6 @@ class Project(object):
     else:
       return 0 
 
-  def commits(self, limit = 1000):
-    cur = get_db().execute('select sha1, author, timestamp, delta_floc, delta_sloc, delta_codefat from commits where project_id = ? order by timestamp desc limit ?', [self.id, limit])
-    return [dict(sha1=row[0], author=row[1], timestamp=row[2], delta_floc=safe(row[3]), delta_sloc=safe(row[4]), delta_codefat=safe(row[5])) for row in cur.fetchall() if row[2] > 0]
-
   @staticmethod
   def get(project_id):
     cur = get_db().execute('select id, name from projects where id = ? limit 1', [project_id])
@@ -176,7 +160,8 @@ def project(project_id):
     codefat_s = "%.2f" % codefat
     codefat_i, codefat_f = codefat_s.split(".")
     return dict(codefat_i=codefat_i,codefat_f=codefat_f,total_sloc=sloc,total_floc="%.2f" % floc)
-  return render_template('project.html', project=project, summary=summary(), commits=project.commits())
+  commits = get_commits_by_project(project_id)
+  return render_template('project.html', project=project, summary=summary(), commits=commits)
 
 @app.route('/update/<int:project_id>')
 def update(project_id):
@@ -287,32 +272,88 @@ def api_trend():
 def diff(old, new):
   return '<h1>not supported yet</h1>'
 
-@app.route('/user/<email>')
-def user(email):
+@app.route('/user/<author>')
+def user(author):
+  user = get_user(author)
+  commits = get_commits_by_author(author)
+  map_project_ids_to_projects([user])
+  return render_template('user.html', user=user, commits=commits)
+
+def get_projects():
+  cur = get_db().execute('select id, name from projects order by name')
+  return [make_dict(cur, row) for row in cur.fetchall()]
+
+def get_user(author):
+  cur = get_db().execute("""select 
+      author, 
+      count(*) as no_commits, 
+      group_concat(project_id, " ") as project_ids, 
+      sum(delta_sloc) as sum_delta_sloc, 
+      sum(delta_floc) as sum_delta_floc
+        from commits 
+        where author = ?""",
+        [author])
+  return make_dict(cur, cur.fetchone())
+
+def map_project_ids_to_projects(users):
+  projects = get_projects()
+  all_projects = dict()
+  for project in projects:
+    all_projects[project['id']] = project
+  for user in users:
+    project_ids = user['project_ids']
+    user['projects'] = [all_projects[int(project_id)] for project_id in set(project_ids.split())]
+
+def get_users():
+  cur = get_db().execute("""select 
+      author, 
+      count(*) as no_commits, 
+      group_concat(project_id, " ") as project_ids, 
+      sum(delta_sloc) as sum_delta_sloc, 
+      sum(delta_floc) as sum_delta_floc
+        from commits 
+        group by author""")
+  return [make_dict(cur, row) for row in cur.fetchall()]
+
+def get_commits_by_project(project_id):
   cur = get_db().execute("""select
-      c.sha1, p.name, p.id,
+      c.sha1, 
+      p.name as project_name, 
+      p.id as project_id,
+      c.sloc, c.delta_sloc, c.floc, c.delta_floc, c.codefat, c.delta_codefat, 
+      c.timestamp, c.parents 
+          from projects p,commits c
+          where c.project_id = p.id and c.project_id = ? order by c.timestamp desc""",
+          [project_id])
+  return [make_commit(cur, row) for row in cur.fetchall()]
+
+def get_commits_by_author(author):
+  cur = get_db().execute("""select
+      c.sha1, 
+      p.name as project_name, 
+      p.id as project_id,
       c.sloc, c.delta_sloc, c.floc, c.delta_floc, c.codefat, c.delta_codefat, 
       c.timestamp, c.parents 
           from projects p,commits c
           where c.project_id = p.id and c.author = ? order by c.timestamp desc""",
-   [email])
-  commits = [dict(sha1=row[0],
-      project_name=row[1],
-      project_id=row[2], 
-      sloc=row[3], 
-      delta_sloc=row[4], 
-      floc=safe(row[5]),
-      delta_floc=safe(row[6]),
-      codefat=safe(row[7]),
-      delta_codefat=safe(row[8]), 
-      timestamp=row[9],
-      parents=row[10]) for row in cur.fetchall()]
-  user = dict(email=email)
-  return render_template('user.html', user=user, commits=commits)
+          [author])
+  return [make_commit(cur, row) for row in cur.fetchall()]
 
+def make_commit(cur, row):
+  commit = make_dict(cur, row)
+  commit['sloc'] = safe(commit['sloc'], 0)
+  commit['delta_sloc'] = safe(commit['delta_sloc'], 0)
+  commit['floc'] = safe(commit['floc'], 0)
+  commit['delta_floc'] = safe(commit['delta_floc'], 0)
+  commit['codefat'] = safe(commit['codefat'], 0)
+  commit['delta_codefat'] = safe(commit['delta_codefat'], 0)
+  commit['parents'] = safe(commit['parents'], '').split() 
+  commit['merge'] = len(commit['parents']) > 1
+  return commit
 
-def safe(val):
-  if val == None:
-    return 0
-  else:
-    return val
+def make_dict(cursor, row):
+  return dict((cursor.description[idx][0], value) 
+      for idx, value in enumerate(row))
+
+def safe(val, default_value):
+  return val if val != None else default_value

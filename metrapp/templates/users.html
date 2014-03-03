@@ -26,7 +26,7 @@ $(document).ready(function()
   <table id='mytable' class="table table-striped tablesorter">
 	  <thead>
    <tr>
-    <th>email</th>
+    <th>Author</th>
     <th># of Commits</th>
     <th>Projects</th>
     <th>&Sigma; &Delta; SLOC</th>
@@ -36,7 +36,7 @@ $(document).ready(function()
    <tbody>
   {% for user in users %}
     <tr>
-	    <td><a href="{{url_for('user', email=user.email)}}">{{user.email}}</a></td>
+	    <td><a href="{{url_for('user', author=user.author)}}">{{user.author}}</a></td>
       <td>{{user.no_commits}} </td>
       <td>
         {% for project in user.projects %}
