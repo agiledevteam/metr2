@@ -58,12 +58,6 @@ def projects():
     return dict(codefat_i=codefat_i,codefat_f=codefat_f,total_sloc=sloc,total_floc="%.2f" % floc)
   return render_template('projects.html',projects=projects,summary=summary())
 
-class User(object):
-  def __init__(self, email, no_commits, projects):
-    self.email = email
-    self.no_commits = no_commits
-    self.projects = projects
-
 @app.route('/users')
 def users():
   cur = get_db().execute('select id, name from projects order by name')
@@ -71,13 +65,15 @@ def users():
   for row in cur.fetchall():
     all_projects[row[0]] = dict(id=row[0], name=row[1]) 
 
-  cur = get_db().execute('select author, count(*), group_concat(project_id, " ") from commits group by author')
+  cur = get_db().execute('select author, count(*), group_concat(project_id, " "), sum(delta_sloc), sum(delta_floc) from commits group by author')
   users = []
   for row in cur.fetchall():
     email = row[0]
     no_commits = row[1]
     projects = [all_projects[int(project_id)] for project_id in set(row[2].split())]
-    users.append(User(email, no_commits, projects))
+    sum_delta_sloc = row[3]
+    sum_delta_floc = row[4]
+    users.append(dict(email=email, no_commits=no_commits, projects=projects, sum_delta_sloc=sum_delta_sloc, sum_delta_floc=sum_delta_floc))
   return render_template('users.html', users=users)
 
 @app.route('/add', methods=['POST'])
