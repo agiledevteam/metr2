@@ -122,8 +122,8 @@ def update(db, project_id):
   git = load_git(db, project_id)
   git.update()
 
-  def already_processed(commitid):
-    cur = db.execute('select count(*) from commits where sha1 = ?', [commitid])
+  def already_processed(sha1):
+    cur = db.execute('select count(*) from commits where sha1 = ? and project_id = ?', [sha1, project_id])
     row = cur.fetchone()
     return row[0] > 0
 
@@ -137,7 +137,7 @@ def update(db, project_id):
   update_delta(db)
 
 def update_delta(db):
-  cur = db.execute('select c.id, c.sloc-p.sloc, c.floc-p.floc, c.codefat-p.codefat from commits c, commits p where c.parents = p.sha1')
+  cur = db.execute('select c.id, c.sloc-p.sloc, c.floc-p.floc, c.codefat-p.codefat from commits c, commits p where c.parents = p.sha1 and c.project_id = p.project_id')
   for id, sloc, floc, codefat in cur.fetchall():
     db.execute('update commits set delta_sloc=?, delta_floc=?, delta_codefat=? where id=?', [sloc,floc,codefat,id])
 
@@ -148,7 +148,9 @@ def metr_repository(git, already_processed, after_processing):
   ids = git.rev_list('HEAD')
   while len(ids) > 0:
     commitid = ids.pop(0)
+    print commitid,
     if already_processed(commitid):
+      print 'already done!'
       continue
     commit = metr_commit(commitid, git)
     after_processing(commit)
