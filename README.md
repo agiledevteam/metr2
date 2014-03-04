@@ -11,6 +11,10 @@ metr web app
 
     $ pip install -r requirements.txt
 
+if you encounter "Python.h: No such file or directory" message,
+
+    $ sudo apt-get install python-dev
+
 # setup plyj
 
     $ cd libs/plyj
