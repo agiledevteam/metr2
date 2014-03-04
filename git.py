@@ -193,7 +193,10 @@ def ls_tree(db, project_id, sha1):
 def diff_tree(db, project_id, sha1):
   git = load_git(db, project_id)
   def metr_file(file):
-    stat = metr_blob(git, file['sha1'])
+    try:
+      stat = metr_blob(git, file['sha1'])
+    except:
+      stat = Stat(sloc=0, floc=0)
     file['sloc'] = stat.sloc
     file['floc'] = stat.floc
     file['codefat'] = codefat(stat)
