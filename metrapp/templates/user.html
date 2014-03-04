@@ -31,7 +31,9 @@
       <td><a class='sha1' href="{{url_for('commit', project_id=c.project_id, sha1=c.sha1)}}">{{c.sha1|truncate(7,True,'')}}</a></td>
       <td><a href="{{url_for('project', project_id=c.project_id)}}" class="label label-default">{{c.project_name}}</a></td>
       {% if c.merge %}
-      <td colspan="3" style='text-align:center'>merge commit</td>
+			<td colspan="3" style="text-align:center">merge commit</td>
+			{% elif c.sloc == 0 %}
+			<td colspan="3" style="text-align:center">compile error</td>
       {% else %}
       <td>{{c.delta_sloc}}</td>
       <td>{{c.delta_floc|round(2)}}</td>

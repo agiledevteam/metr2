@@ -94,7 +94,7 @@ class Project(object):
   def __init__(self, id, name):
     self.id = id
     self.name = name
-    self.commit = get_last_commit_by_project(id)
+    self.commit = get_last_successful_commit_by_project(id)
 
   @property
   def last_update(self):
@@ -218,7 +218,7 @@ redis = Redis()
 def metr_day_project(by_when, project_id):
   "return (sloc, floc)"
   def update():
-    cur = get_db().execute('select sloc, floc from commits where project_id = ? and timestamp < ? order by timestamp desc limit 1', [project_id, by_when])
+    cur = get_db().execute('select sloc, floc from commits where project_id = ? and timestamp < ? and sloc > 0 order by timestamp desc limit 1', [project_id, by_when])
     row = cur.fetchone()
     if row != None and row[0] > 0: 
       return (row[0], row[1])
@@ -310,7 +310,8 @@ def get_users():
 
 def get_commits_by_project(project_id):
   cur = get_db().execute("""select
-      c.sha1, 
+      c.sha1,
+      c.author,
       p.name as project_name, 
       p.id as project_id,
       c.sloc, c.delta_sloc, c.floc, c.delta_floc, c.codefat, c.delta_codefat, 
@@ -320,21 +321,23 @@ def get_commits_by_project(project_id):
           [project_id])
   return [make_commit(cur, row) for row in cur.fetchall()]
 
-def get_last_commit_by_project(project_id):
+def get_last_successful_commit_by_project(project_id):
   cur = get_db().execute("""select
       c.sha1, 
+      c.author,
       p.name as project_name, 
       p.id as project_id,
       c.sloc, c.delta_sloc, c.floc, c.delta_floc, c.codefat, c.delta_codefat, 
       c.timestamp, c.parents 
           from projects p,commits c
-          where c.project_id = p.id and c.project_id = ? order by c.timestamp desc limit 1""",
+          where c.project_id = p.id and c.project_id = ? and c.sloc > 0 order by c.timestamp desc limit 1""",
           [project_id])
   return make_commit(cur, cur.fetchone())
 
 def get_commits_by_author(author):
   cur = get_db().execute("""select
-      c.sha1, 
+      c.sha1,
+      c.author,
       p.name as project_name, 
       p.id as project_id,
       c.sloc, c.delta_sloc, c.floc, c.delta_floc, c.codefat, c.delta_codefat, 
@@ -346,7 +349,8 @@ def get_commits_by_author(author):
 
 def get_commit(project_id, sha1):
   cur = get_db().execute("""select 
-      c.sha1, 
+      c.sha1,
+      c.author,
       p.name as project_name, 
       p.id as project_id,
       c.sloc, c.delta_sloc, c.floc, c.delta_floc, c.codefat, c.delta_codefat, 

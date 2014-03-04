@@ -6,6 +6,7 @@ import random
 import re
 import config
 from metr import metr, stat_sum, Stat
+import logging
 
 test_pattern = re.compile('tests?/', re.IGNORECASE)
 
@@ -121,43 +122,24 @@ def load_git(db, project_id):
 def update(db, project_id):
   git = load_git(db, project_id)
   git.update()
+  metr_repository(git, db, project_id)
+  update_delta(db)
 
-  def already_processed(sha1):
-    cur = db.execute('select count(*) from commits where sha1 = ? and project_id = ?', [sha1, project_id])
-    row = cur.fetchone()
-    return row[0] > 0
+def metr_repository(git, db, project_id):
+  cur = db.execute('select sha1 from commits where project_id = ?', (project_id,))
+  commits_in_db = set(row[0] for row in cur.fetchall())
+  commits_in_git = set(git.rev_list('HEAD'))
 
-  def after_processing(commit):
+  for commitid in commits_in_git - commits_in_db:
+    commit = metr_commit(commitid, git)
     db.execute('insert into commits (project_id, author, timestamp, message, parents, sha1, sloc, floc, codefat) values (?,?,?,?,?,?,?,?,?)', 
             [project_id, commit.author, commit.timestamp, commit.message, commit.parents, commit.sha1, commit.sloc, commit.floc, commit.codefat])
     db.commit()
-
-  metr_repository(git, already_processed, after_processing)
-
-  update_delta(db)
 
 def update_delta(db):
   cur = db.execute('select c.id, c.sloc-p.sloc, c.floc-p.floc, c.codefat-p.codefat from commits c, commits p where c.parents = p.sha1 and c.project_id = p.project_id')
   for id, sloc, floc, codefat in cur.fetchall():
     db.execute('update commits set delta_sloc=?, delta_floc=?, delta_codefat=? where id=?', [sloc,floc,codefat,id])
-
-
-def metr_repository(git, already_processed, after_processing):
-  print len(cache)
-  count = 0
-  ids = git.rev_list('HEAD')
-  while len(ids) > 0:
-    commitid = ids.pop(0)
-    print commitid,
-    if already_processed(commitid):
-      print 'already done!'
-      continue
-    commit = metr_commit(commitid, git)
-    after_processing(commit)
-    count += 1
-#    if count > 10:
-#      print "break after processing", count, "commits"
-#      break
 
 def metr_commit(commitid, git):
   """
@@ -172,7 +154,8 @@ def metr_commit(commitid, git):
   stats = []
   for entry in entries:
     try:
-      stats.append(metr_blob(git, entry.sha1))
+      stat0 = metr_blob(git, entry.sha1)
+      stats.append(stat0)
     except:
       print "failed with", entry
       break
@@ -185,13 +168,11 @@ def metr_blob(git, sha1):
   "May raise exception"
   if sha1 in cache:
     return cache[sha1]
-  try: 
+  else:
     blob = git.parse_blob(sha1)
     stat_ = metr(blob)
     cache[sha1] = stat_
     return stat_
-  except:
-    return Stat(sloc=0,floc=0)
 
 # todo change this into MRU cache 
 cache = dict()
