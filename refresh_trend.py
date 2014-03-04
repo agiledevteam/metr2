@@ -1,7 +1,6 @@
 import redis
 r = redis.Redis()
-r.flushdb()
-
+r.delete(r.keys("codefat:*"))
 
 from metrapp import app
 
