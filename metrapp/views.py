@@ -33,15 +33,6 @@ def teardown_request(exception):
   if db is not None:
     db.close()
 
-
-def last_commit(project_id):
-  try:
-    cur = get_db().execute('select id, timestamp, sloc, floc from commits where project_id=? order by timestamp desc limit 1', [project_id])
-    row = cur.fetchone()
-    return dict(id=row[0], timestamp=row[1], sloc=row[2], floc=row[3])
-  except:
-    return None 
-
 @app.route('/')
 def projects():
   projects=Project.all()
@@ -103,7 +94,7 @@ class Project(object):
   def __init__(self, id, name):
     self.id = id
     self.name = name
-    self.commit = last_commit(id)
+    self.commit = get_last_commit_by_project(id)
 
   @property
   def last_update(self):
@@ -206,11 +197,13 @@ def filter_datetime(timestamp):
   d = datetime.fromtimestamp(timestamp)
   return d.ctime()
 
-@app.route('/commit/<int:project_id>/', defaults=dict(sha1='HEAD'))
 @app.route('/commit/<int:project_id>/<sha1>')
 def commit(project_id, sha1):
   project = Project.get(project_id)
-  commit = git.get_commit(get_db(), project_id, sha1)
+  if sha1 == 'HEAD':
+    commit = project.commit
+  else:
+    commit = get_commit(project_id, sha1)
   diffs = git.diff_tree(get_db(), project_id, sha1)
   return render_template('commit.html', project=project, commit=commit, diffs=diffs)
   
@@ -327,6 +320,18 @@ def get_commits_by_project(project_id):
           [project_id])
   return [make_commit(cur, row) for row in cur.fetchall()]
 
+def get_last_commit_by_project(project_id):
+  cur = get_db().execute("""select
+      c.sha1, 
+      p.name as project_name, 
+      p.id as project_id,
+      c.sloc, c.delta_sloc, c.floc, c.delta_floc, c.codefat, c.delta_codefat, 
+      c.timestamp, c.parents 
+          from projects p,commits c
+          where c.project_id = p.id and c.project_id = ? order by c.timestamp desc limit 1""",
+          [project_id])
+  return make_commit(cur, cur.fetchone())
+
 def get_commits_by_author(author):
   cur = get_db().execute("""select
       c.sha1, 
@@ -338,6 +343,19 @@ def get_commits_by_author(author):
           where c.project_id = p.id and c.author = ? order by c.timestamp desc""",
           [author])
   return [make_commit(cur, row) for row in cur.fetchall()]
+
+def get_commit(project_id, sha1):
+  cur = get_db().execute("""select 
+      c.sha1, 
+      p.name as project_name, 
+      p.id as project_id,
+      c.sloc, c.delta_sloc, c.floc, c.delta_floc, c.codefat, c.delta_codefat, 
+      c.timestamp, c.parents 
+          from projects p,commits c
+          where c.project_id = p.id and c.project_id = ? and c.sha1 like ?""", 
+          [project_id, sha1 + '%'])
+  row = cur.fetchone()
+  return make_commit(cur, row)
 
 def make_commit(cur, row):
   commit = make_dict(cur, row)

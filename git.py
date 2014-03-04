@@ -228,17 +228,6 @@ def codefat(stat):
 
 def get_parents(db, project_id, sha1):
   return [""]
-  
-def get_commit(db, project_id, sha1):
-  if sha1 == 'HEAD':
-    cur = db.execute('select id,project_id,author,timestamp,message,parents,sha1,sloc,floc,codefat from commits where project_id=? order by timestamp desc limit 1', [project_id])
-  else:
-    cur = db.execute('select id,project_id,author,timestamp,message,parents,sha1,sloc,floc,codefat from commits where sha1 like ?', [sha1 + '%'])
-  row = cur.fetchone()
-  message = row[4]
-  parents = row[5].split() if row[5] != None else []
-  commit = dict(id=row[0],project_id=row[1],author=row[2],timestamp=row[3],message=message,parents=parents,sha1=row[6],sloc=row[7],floc=row[8],codefat=row[9])
-  return commit
 
 def decode(s):
   try:
