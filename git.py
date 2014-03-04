@@ -34,6 +34,10 @@ class Git(object):
   def cloned(self):
     return path.exists(self.gitdir)
 
+  def cmd(self, *args):
+    output = check_output(self.base_cmd + list(args))
+    return output.splitlines()
+
   def fetch(self):
     call(self.base_cmd + ['fetch', '--all', '-n'])
   
@@ -79,7 +83,7 @@ class Git(object):
     for line in output.splitlines():
       values = line.split()
       sha1, filename = values[2], values[3]
-      if self.filter(filename):
+      if is_java(filename):
         result.append(Entry(sha1, filename))
     return result
   
@@ -87,10 +91,6 @@ class Git(object):
     src = check_output(self.base_cmd + ['cat-file', 'blob', sha1], universal_newlines=True)
     return src
 
-  def filter(self,filename):
-    name, ext = path.splitext(filename) 
-    return test_pattern.search(filename) == None and ext == ".java"
-   
   def diff_tree(self, sha1):
     output = check_output(self.base_cmd + ['diff-tree', '-r', '--root', '-m', '--no-renames', '--no-commit-id', sha1])
     diff = [] 
@@ -101,7 +101,7 @@ class Git(object):
         newfilename = values[6]
       else:
         newfilename = oldfilename 
-      if self.filter(newfilename): 
+      if is_java(newfilename): 
         diff.append(Diff(status=status[0], new=dict(filename=newfilename, sha1=newsha1), old=dict(filename=oldfilename, sha1=oldsha1)))
     return diff
 
@@ -156,6 +156,8 @@ def metr_commit(commitid, git):
     try:
       stat0 = metr_blob(git, entry.sha1)
       stats.append(stat0)
+    except KeyboardInterrupt:
+      raise
     except:
       print "failed with", entry
       break
@@ -195,6 +197,8 @@ def diff_tree(db, project_id, sha1):
   def metr_file(file):
     try:
       stat = metr_blob(git, file['sha1'])
+    except KeyboardInterrupt:
+      raise
     except:
       stat = Stat(sloc=0, floc=0)
     file['sloc'] = stat.sloc
@@ -221,5 +225,10 @@ def decode(s):
       return s.decode('euc-kr')
     except:
       return s.decode('utf-8', errors='ignore')
-    
+ 
+def is_java(filename):
+  name, ext = path.splitext(filename) 
+  return test_pattern.search(filename) == None and ext == ".java"
+   
+   
 
