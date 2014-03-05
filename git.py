@@ -8,6 +8,7 @@ import config
 from metr import metr, stat_sum, Stat
 import logging
 import update_delta
+from pygit2 import Repository
 
 test_pattern = re.compile('tests?/', re.IGNORECASE)
 
@@ -203,6 +204,113 @@ def diff_tree(db, project_id, sha1):
     return file
   diffs = git.diff_tree(sha1)
   return [dict(status=diff.status, old=metr_file(diff.old), new=metr_file(diff.new)) for diff in diffs]
+
+def hunk_for_old(hunk):
+  lines = []
+  line_no = hunk.old_start
+  for kind, line in hunk.lines:
+    if kind == ' ':
+      lines.append((line_no, '', line))
+    elif kind == '-':
+      lines.append((line_no, 'deleted', line))
+    else:
+      lines.append((line_no, 'empty', ' '))
+    line_no += 1
+  return lines
+
+def hunk_for_new(hunk):
+  lines = []
+  line_no = hunk.new_start
+  for kind, line in hunk.lines:
+    if kind == ' ':
+      lines.append((line_no, '', line))
+    elif kind == '-':
+      lines.append((line_no, 'empty', ' '))
+    else:
+      lines.append((line_no, 'added', line))
+    line_no += 1
+  return lines
+
+def hunk_lines(hunk):
+  lines = []
+  line_no = hunk.old_start
+  for kind, line in hunk.lines:
+    if kind == ' ':
+      lines.append((line_no, '', line))
+    elif kind == '-':
+      lines.append((line_no, 'deleted', line))
+    else:
+      lines.append((line_no, 'added', line))
+    line_no += 1
+  return lines
+
+# def diff(db, project_id, old, new):
+#   repo = get_repository(db, project_id)
+#   old_blob = repo[old]
+#   new_blob = repo[new]
+#   patch = old_blob.diff(new_blob)
+#   old_lines = [(line_no + 1, '', line_text) for line_no, line_text in enumerate(old_blob.data.splitlines())]
+#   new_lines = [(line_no + 1, '', line_text) for line_no, line_text in enumerate(new_blob.data.splitlines())]
+#   for hunk in reversed(patch.hunks):
+#     old_lines[hunk.old_start-1:hunk.old_start + hunk.old_lines - 1] = hunk_for_old(hunk)
+#     new_lines[hunk.new_start-1:hunk.new_start + hunk.new_lines - 1] = hunk_for_new(hunk)
+#   old_lines = [dict(no=line[0], kind=line[1], text=line[2]) for line in old_lines]
+#   new_lines = [dict(no=line[0], kind=line[1], text=line[2]) for line in new_lines]
+#   return old_lines, new_lines
+
+
+def iterate_hunks(lines):
+  hunk = []
+  for line in lines:
+    if line[0] == 'd': # diff
+      if len(hunk) != 0:
+        yield hunk
+        hunk = []
+    hunk.append(line)
+  if len(hunk) != 0:
+    yield hunk
+
+def format_hunk(hunk):
+  lines = []
+  for line in hunk:
+    if line[0] == '+':
+      lines.append(('added', line))
+    elif line[0] == '-':
+      lines.append(('deleted', line))
+    elif line[0] == '@':
+      lines.append(('context', line))
+    else:
+      lines.append(('', line))
+  return [dict(kind=kind, text=line) for kind, line in lines]
+
+def hunk_index(hunk):
+  for line in hunk:
+    if line[0] == 'i':
+      return line.split()[1].split("..")
+  raise KeyError()
+
+def parse_diff_patch(patch, old, new):
+  lines = patch.splitlines()
+  for hunk in iterate_hunks(lines):
+    a, b = hunk_index(hunk)
+    if old.startswith(a) and new.startswith(b):
+      return format_hunk(hunk)
+  return None
+
+def diff(db, project_id, sha1, old, new):
+  repo = get_repository(db, project_id)
+  commit = repo.get(sha1)
+  for parent in commit.parents:
+    diff = repo.diff(parent, commit)
+    file_diffs = parse_diff_patch(diff.patch, old, new)
+    if file_diffs != None:
+      return file_diffs
+  raise KeyError()
+
+def get_repository(db, project_id):
+  cur = db.execute('select name from projects where id=?', (project_id,))
+  project_name, = cur.fetchone()
+  return Repository(path.join(app.config['GITDIR'], project_name, '.git'))
 
 def codefat(stat):
   if stat.sloc == 0:

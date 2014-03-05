@@ -108,7 +108,54 @@ body {
   color: #d0b44c;
 }
 
+
+.diff-list {
+  font-family: monospace;
+  table-layout: fixed;
+  font-size: small;
+}
+
+.diff-text- {
+  font-family: monospace;
+  white-space: pre;
+}
+.diff-text-added {
+  color: #6cc644;
+  font-family: monospace;
+  white-space: pre;
+}
+.diff-text-deleted {
+  color: #bd2c00;
+  font-family: monospace;
+  white-space: pre;
+}
+.diff-text-empty {
+  font-family: monospace;
+  white-space: pre;
+}
+.diff-text-context {
+  font-family: monospace;
+  white-space: pre;
+  color: #0000ff;
+  font-weight: bold;
+}
+
 .sha1 {
   font-family:monospace;
 }
 
+#column1-wrap{
+    float: left;
+    width: 100%;
+}
+#diff-old{
+    margin-right: 50%;
+}
+#diff-new{
+    float: left;
+    width: 50%;
+    margin-left: -50%;
+}
+#clear{
+    clear: both;
+}

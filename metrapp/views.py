@@ -10,7 +10,6 @@ import git
 from redis import Redis
 import pickle
 
-
 # Database stuff
 
 def connect_db():
@@ -261,9 +260,12 @@ def api_trend():
   stats = [metr_day_projects(day, project_ids) for day in range(90)]
   return jsonify(result=stats)
 
-@app.route('/diff/<old>/<new>')
-def diff(old, new):
-  return '<h1>not supported yet</h1>'
+@app.route('/diff/<int:project_id>/<sha1>/<old>/<new>')
+def diff(project_id, sha1, old, new):
+  #old_lines, new_lines = git.diff(get_db(), project_id, old, new)
+  old_lines, new_lines = [], []
+  lines = git.diff(get_db(), project_id, sha1, old, new)
+  return render_template('diff.html', lines=lines, old_lines=old_lines, new_lines=new_lines)
 
 @app.route('/user/<author>')
 def user(author):
