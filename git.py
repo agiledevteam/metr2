@@ -7,6 +7,7 @@ import re
 import config
 from metr import metr, stat_sum, Stat
 import logging
+import update_delta
 
 test_pattern = re.compile('tests?/', re.IGNORECASE)
 
@@ -123,7 +124,7 @@ def update(db, project_id):
   git = load_git(db, project_id)
   git.update()
   metr_repository(git, db, project_id)
-  update_delta(db)
+  update_delta.update_delta(db)
 
 def metr_repository(git, db, project_id):
   cur = db.execute('select sha1 from commits where project_id = ?', (project_id,))
@@ -135,11 +136,6 @@ def metr_repository(git, db, project_id):
     db.execute('insert into commits (project_id, author, timestamp, message, parents, sha1, sloc, floc, codefat) values (?,?,?,?,?,?,?,?,?)', 
             [project_id, commit.author, commit.timestamp, commit.message, commit.parents, commit.sha1, commit.sloc, commit.floc, commit.codefat])
     db.commit()
-
-def update_delta(db):
-  cur = db.execute('select c.id, c.sloc-p.sloc, c.floc-p.floc, c.codefat-p.codefat from commits c, commits p where c.parents = p.sha1 and c.project_id = p.project_id')
-  for id, sloc, floc, codefat in cur.fetchall():
-    db.execute('update commits set delta_sloc=?, delta_floc=?, delta_codefat=? where id=?', [sloc,floc,codefat,id])
 
 def metr_commit(commitid, git):
   """
