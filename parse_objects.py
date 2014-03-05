@@ -6,6 +6,11 @@
 from metrapp import app, views
 import git
 import metr
+from pygit2 import Repository
+import metr
+import os
+
+gitbase = app.config['GITDIR']
 
 def main():
     for project in get_all_projects():
@@ -16,38 +21,42 @@ def get_all_projects():
 
 def parse_all_objects(project_id, project_name):
     g = git.load_git(views.get_db(), project_id)
-    erros = get_error_files(g, project_name)
+    r = Repository(os.path.join(gitbase, project_name, '.git'))
+    errors = get_error_files(g, r, project_name)
     mark_error_commits(g, project_id, project_name, errors)
 
-def get_error_files(g, project_name):
+def get_error_files(g, r, project_name):
     errors = set()
-
-    all_files = get_all_files(g)
-    size = len(all_files)
-    for i, blob_id in enumerate(all_files):
+    all_file_ids = get_all_file_ids(g)
+    size = len(all_file_ids)
+    for i, blob_id in enumerate(all_file_ids):
         print i, size, project_name, 'blob', blob_id
-        if not metr_succeeded(g, blob_id):
+        if not metr_succeeded(g, r, blob_id):
             errors.add(blob_id)
     return errors
 
-def metr_succeeded(g, blob_id):
+def metr_succeeded(g, r, blob_id):
     try:
-        git.metr_blob(g, blob_id)
+        data = r[blob_id].data
+        metr.metr(normalize_newline(data))
         return True
     except KeyboardInterrupt:
         raise
     except:
         return False
 
-def get_all_files(g):
-    files = []
+def normalize_newline(data):
+    return data.replace('\r\n', '\n').replace('\r', '\n')
+
+def get_all_file_ids(g):
+    file_ids = []
     for line in g.cmd('rev-list', '--objects', 'HEAD'):
         values = line.split()
         if len(values) == 1:
             continue
         if git.is_java(values[1]):
-            files.append(values[0])
-    return files
+            file_ids.append(values[0])
+    return file_ids
 
 def mark_error_commits(g, project_id, project_name, errors):
     count = 0
