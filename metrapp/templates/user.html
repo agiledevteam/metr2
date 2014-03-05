@@ -20,6 +20,8 @@
    <tr>
      <th>ID</th>
      <th>Project</th>
+     <th>Title</th>
+     <th>When</th>
      <th>&Delta;SLOC</th>
      <th>&Delta;FLOC</th>
      <th>&Delta;Code Fat</th>
@@ -30,6 +32,9 @@
     <tr>
       <td><a class='sha1' href="{{url_for('commit', project_id=c.project_id, sha1=c.sha1)}}">{{c.sha1|truncate(7,True,'')}}</a></td>
       <td><a href="{{url_for('project', project_id=c.project_id)}}" class="label label-default">{{c.project_name}}</a></td>
+      <td><a href="{{url_for('commit', project_id=c.project_id,sha1=c.sha1)}}"
+        >{{c.title}}</a></td>
+      <td>{{c.timestamp|date}}</td>
       {% if c.merge %}
 			<td colspan="3" style="text-align:center">merge commit</td>
 			{% elif c.sloc == 0 %}

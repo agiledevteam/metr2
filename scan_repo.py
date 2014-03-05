@@ -38,7 +38,7 @@ def main():
       print 'found', name, 'but metr already has it.' 
   db.commit()    
   if added > 0:
-    print added, 'project(s) added, need to run "python update_all.py"
+    print added, 'project(s) added, need to run "python update_all.py"'
   db.close()
 
 if __name__ == '__main__':

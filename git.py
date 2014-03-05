@@ -205,6 +205,10 @@ def diff_tree(db, project_id, sha1):
   diffs = git.diff_tree(sha1)
   return [dict(status=diff.status, old=metr_file(diff.old), new=metr_file(diff.new)) for diff in diffs]
 
+def resolve(db, project_id, ref):
+  git = load_git(db, project_id)
+  return git.rev_parse(ref)
+
 def hunk_for_old(hunk):
   lines = []
   line_no = hunk.old_start

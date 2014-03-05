@@ -8,20 +8,19 @@
 {% endblock %}
 
 {% block content %}
-<h1 class="page-header">Commit: {{commit.sha1|truncate(7,True,'')}}</h1>
+<h1 class="page-header">{{commit.title}}</h1>
 <ul class="list-group">
   <li class="list-group-item">Project: <a href="{{url_for('project', project_id=project.id)}}">{{project.name}}</a></li>
+  <li class="list-group-item">Commit: <span class="sha1">{{commit.sha1}}</span></li>
   <li class="list-group-item">Author: <a href="{{url_for('user', author=commit.author)}}">{{commit.author}}</a> at {{commit.timestamp|datetime}}</li>
   <li class="list-group-item">Code Fat: {{commit.codefat|round(2)}}% ({{commit.floc|round(2)}}/{{commit.sloc}})</li>
   <li class="list-group-item">Parents: 
     {% for p in commit.parents %}
-    <a href="{{url_for('commit', project_id=project.id, sha1=p)}}">{{p | truncate(7,True,'')}}</a>
+    <a href="{{url_for('commit', project_id=project.id, sha1=p)}}" class="sha1">{{p | truncate(7,True,'')}}</a>
     {% endfor %}
   </li>
   <li class="list-group-item">
-  <pre>
-{{commit.message}}
-  </pre>
+  <pre>{{commit.message}}</pre>
   </li> 
 </ul>
 

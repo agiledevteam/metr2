@@ -1,9 +1,9 @@
-from metrapp import app, views
+from metrapp import app, views, database
 import git
 import sys
 
 def main(project_id, commit_id): 
-  g = git.load_git(views.get_db(), project_id)
+  g = git.load_git(database.get_db(), project_id)
   result = git.metr_commit(commit_id, g)
   print "metr_commit=>", result
 

@@ -1,14 +1,14 @@
-from metrapp import app, views
+from metrapp import app, views, database
 import git
 import sys
 
 def update_project(project_id):
   with app.app_context():
-    git.update(views.get_db(), project_id)
+    git.update(database.get_db(), project_id)
 
 def show_projects():
   with app.app_context():
-    db = views.get_db()
+    db = database.get_db()
     cur = db.execute('select id, name from projects order by id')
     for id, name in cur.fetchall():
       print id, name

@@ -3,7 +3,7 @@
 # run this script to cancel out all commits which include a file with compilation errors.
 # after run this script, run 'update_delta.py' also to update delta information in the database.
 
-from metrapp import app, views
+from metrapp import app, views, database
 import git
 import metr
 from pygit2 import Repository
@@ -26,7 +26,7 @@ def get_all_projects():
     return [Project(project['id'], project['name']) for project in views.get_projects()]
 
 def parse_all_objects(project):
-    g = git.load_git(views.get_db(), project.id)
+    g = git.load_git(database.get_db(), project.id)
     r = Repository(os.path.join(gitbase, project.name, '.git'))
     errors = get_error_files(g, r, project)
     mark_error_commits(g, project, errors)
@@ -86,7 +86,7 @@ def mark_error_commits(g, project, errors):
         if not set(ls_tree(g, commit_id)).isdisjoint(errors):
             error_commits.append((project.id, commit_id))
 
-    db = views.get_db()
+    db = database.get_db()
     db.executemany('update commits set sloc=-1, floc=-1, codefat=0 where project_id=? and sha1=?', error_commits)
     db.commit()
     return len(error_commits) 

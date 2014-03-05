@@ -67,6 +67,7 @@ function drawChart() {
 		<thead>
 			<tr>
 				<th>ID</th>
+        <th>Title</th>
 				<th>Committed by</th>
 				<th>When</th>
 				<th>&Delta;SLOC</th>
@@ -78,6 +79,8 @@ function drawChart() {
 			{% for commit in commits %}
 			<tr>
 				<td><a class="sha1" href="{{url_for('commit', project_id=project.id,sha1=commit.sha1)}}">{{commit.sha1|truncate(7,True,'')}}</a></td>
+        <td><a href="{{url_for('commit', project_id=project.id,sha1=commit.sha1)}}"
+        >{{commit.title|truncate(50,True,'...')}}</a></td>
 				<td><a href="{{url_for('user', author=commit.author)}}">{{commit.author}}</a></td>
 				<td>{{commit.timestamp|datetime}}</td>
 				{% if commit.merge %}

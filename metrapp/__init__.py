@@ -7,4 +7,4 @@ app.config.from_object('config')
 Bootstrap(app)
 
 import metrapp.views
-
+import metrapp.apis
