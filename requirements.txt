@@ -9,6 +9,7 @@ itsdangerous==0.23
 ply==3.4
 plyj==0.0.1
 py==1.4.20
+pygit2==0.20.2
 pytest==2.5.2
 redis==2.9.1
 wsgiref==0.1.2
