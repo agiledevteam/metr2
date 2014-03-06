@@ -127,7 +127,11 @@ def make_commit(cur, row):
   commit['delta_codefat'] = safe(commit['delta_codefat'], 0)
   commit['parents'] = safe(commit['parents'], '').split() 
   commit['merge'] = len(commit['parents']) > 1
-  commit['title'] = commit['message'].splitlines()[0].strip()
+  message = commit['message']
+  if len(message.splitlines()) > 0:
+    commit['title'] = message.splitlines()[0].strip()
+  else:
+    commit['title'] = commit['sha1']
   return commit
 
 def make_dict(cursor, row):
