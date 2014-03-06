@@ -15,13 +15,12 @@ def api_projects():
 
 @app.route('/api/project/<int:project_id>')
 def api_project(project_id):
-  cur = get_db().execute('select timestamp, codefat, sloc from commits where project_id = ? order by timestamp', [project_id])
-  data = dict()
-  data['cols'] = [dict(label='commit', type='datetime'), 
-      dict(label='code fat', type='number'), 
-      dict(label='sloc', type='number')]
-  data['rows'] = [dict(c=[dict(v=row[0]), dict(v=row[1]), dict(v=row[2])]) for row in cur.fetchall() if row[2] > 0]
-  return jsonify(data)
+  # rev-list --first-parent (for better trend viewing)
+  revs = git.rev_list_first_parent(get_db(), project_id)
+  # gather commits
+  cur = get_db().execute('select sha1, timestamp, codefat, sloc from commits where project_id = ?', [project_id])
+  commits = [(timestamp, codefat, sloc, sha1) for sha1, timestamp, codefat, sloc in cur.fetchall() if sha1 in revs]
+  return jsonify(commits)
 
 @app.route('/api/commit/<int:project_id>/', defaults=dict(sha1='HEAD'))
 @app.route('/api/commit/<int:project_id>/<sha1>')
