@@ -8,6 +8,45 @@ from metrapp import app
 import git
 from database import *
 
+from math import ceil
+
+
+PER_PAGE = 50
+
+def url_for_other_page(page):
+    args = request.view_args.copy()
+    args['page'] = page
+    return url_for(request.endpoint, **args)
+
+app.jinja_env.globals['url_for_other_page'] = url_for_other_page
+
+class Pagination(object):
+
+  def __init__(self, page, per_page, total_count):
+    self.page = page
+    self.per_page = per_page
+    self.total_count = total_count
+
+  @property
+  def pages(self):
+    return int(ceil(self.total_count / float(self.per_page)))
+
+  @property
+  def has_prev(self):
+    return self.page > 1
+
+  @property
+  def has_next(self):
+    return self.page < self.pages
+
+  def iter_pages(self, left_edge=2, left_current=2, right_current=5, right_edge=2):
+    last = 0
+    for num in xrange(1, self.pages + 1):
+      if num <= left_edge or (num > self.page - left_current - 1 and num < self.page + right_current) or num > self.pages - right_edge:
+        if last + 1 != num:
+          yield None
+        yield num
+        last = num
 
 @app.route('/')
 def projects():
@@ -25,11 +64,50 @@ def projects():
     return dict(codefat_i=codefat_i,codefat_f=codefat_f,total_sloc=sloc,total_floc="%.2f" % floc)
   return render_template('projects.html',projects=projects,summary=summary())
 
-@app.route('/users')
-def users():
+
+@app.route('/project/<int:project_id>', defaults={'page': 1})
+@app.route('/project/<int:project_id>/<int:page>')
+def project(project_id,page):
+  project = Project.get(project_id)
+  def summary():
+    sloc, floc = project.metr()
+    codefat = 100 * (floc/sloc) if sloc != 0 else .0
+    codefat_s = "%.2f" % codefat
+    codefat_i, codefat_f = codefat_s.split(".")
+    return dict(codefat_i=codefat_i,codefat_f=codefat_f,total_sloc=sloc,total_floc="%.2f" % floc)
+  
+  commits = get_commits_by_project(project_id)
+
+  count = len(commits)
+  pagination = Pagination(page, PER_PAGE, count)
+  commits = commits[(page-1)*PER_PAGE:page*PER_PAGE]
+
+  return render_template('project.html', project=project, summary=summary(), commits=commits, pagination=pagination)
+
+@app.route('/users', defaults={'page': 1})
+@app.route('/users/<int:page>')
+def users(page):
   users = get_users()
+
+  count = len(users)
+  pagination = Pagination(page, PER_PAGE, count)
+  users = users[(page-1)*PER_PAGE:page*PER_PAGE]
+  
   map_project_ids_to_projects(users)
-  return render_template('users.html', users=users)
+  return render_template('users.html', users=users, pagination=pagination)
+
+@app.route('/user/<author>', defaults={'page': 1})
+@app.route('/user/<author>/<int:page>')
+def user(author, page):
+  user = get_user(author)
+  commits = get_commits_by_author(author)
+  map_project_ids_to_projects([user])
+
+  count = len(commits)
+  pagination = Pagination(page, PER_PAGE, count)
+  commits = commits[(page-1)*PER_PAGE:page*PER_PAGE]
+
+  return render_template('user.html', user=user, commits=commits, pagination=pagination)
 
 @app.route('/add', methods=['POST'])
 def add_project():
@@ -118,18 +196,6 @@ class Project(object):
     projects = [ Project.get(i) for i in project_id ]
     return projects     
 
-@app.route('/project/<int:project_id>')
-def project(project_id):
-  project = Project.get(project_id)
-  def summary():
-    sloc, floc = project.metr()
-    codefat = 100 * (floc/sloc) if sloc != 0 else .0
-    codefat_s = "%.2f" % codefat
-    codefat_i, codefat_f = codefat_s.split(".")
-    return dict(codefat_i=codefat_i,codefat_f=codefat_f,total_sloc=sloc,total_floc="%.2f" % floc)
-  commits = get_commits_by_project(project_id)
-  return render_template('project.html', project=project, summary=summary(), commits=commits)
-
 @app.route('/update/<int:project_id>')
 def update(project_id):
   git.update(get_db(), project_id)
@@ -178,9 +244,3 @@ def diff(project_id, sha1, old, new):
   lines = git.diff(get_db(), project_id, sha1, old, new)
   return render_template('diff.html', lines=lines, old_lines=old_lines, new_lines=new_lines)
 
-@app.route('/user/<author>')
-def user(author):
-  user = get_user(author)
-  commits = get_commits_by_author(author)
-  map_project_ids_to_projects([user])
-  return render_template('user.html', user=user, commits=commits)

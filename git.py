@@ -322,8 +322,9 @@ def codefat(stat):
   else:
     return 100 * stat.floc/stat.sloc
 
-def get_parents(db, project_id, sha1):
-  return [""]
+def rev_list_first_parent(db, project_id):
+  git = load_git(db, project_id)
+  return git.cmd('rev-list', '--first-parent', 'HEAD')
 
 def decode(s):
   try:
