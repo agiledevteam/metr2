@@ -13,14 +13,22 @@ def api_projects():
   data = [p.__dict__ for p in Project.all()]
   return jsonify(result=data)
 
+def prec(f, n):
+  return int(f*n)/float(n)
+
 @app.route('/api/project/<int:project_id>')
 def api_project(project_id):
   # rev-list --first-parent (for better trend viewing)
-  revs = git.rev_list_first_parent(get_db(), project_id)
+  # revs = git.rev_list_first_parent(get_db(), project_id)
   # gather commits
-  cur = get_db().execute('select sha1, timestamp, codefat, sloc from commits where project_id = ?', [project_id])
-  commits = [(timestamp, codefat, sloc, sha1) for sha1, timestamp, codefat, sloc in cur.fetchall() if sha1 in revs]
-  return jsonify(commits)
+  cur = get_db().execute('''select 
+    sha1, timestamp, codefat, sloc 
+    from commits 
+    where project_id = ? and sloc > 0 and datetime(timestamp, 'unixepoch') > datetime('now', '-1 year')
+    order by timestamp''', 
+    [project_id])
+  commits = [(timestamp, prec(codefat, 100), sloc, sha1[:7]) for sha1, timestamp, codefat, sloc in cur.fetchall()]
+  return jsonify(result=commits)
 
 @app.route('/api/commit/<int:project_id>/', defaults=dict(sha1='HEAD'))
 @app.route('/api/commit/<int:project_id>/<sha1>')

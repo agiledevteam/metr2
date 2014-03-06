@@ -1,6 +1,5 @@
 {% extends "dashboard.html" %}
 
-
 {% block  head %}
 {{super()}}
 
@@ -16,14 +15,10 @@ $(document).ready(function()
 {% endblock %}
 
 {% block content %}
- <h1 class="page-header">Users</h1>
-  <div>
-	Total: {{ users|length }}
-  </div>
+ <h1 class="page-header">{{ pagination.total_count }} User(s)</h1>
 
-  <h2 class="sub-header">List</h2>
   <div class="table-responsive">
-  <table id='mytable' class="table table-striped tablesorter">
+  <table id='mytable' class="table table-condensed tablesorter">
 	  <thead>
    <tr>
     <th>Author</th>
@@ -51,4 +46,10 @@ $(document).ready(function()
   </tbody>
   </table>
   </div>
+  <div class="col-md-12 text-center">
+  {% from '_helpers.html' import render_pagination with context %}
+  {{render_pagination(pagination)}}
+  </div>
 {% endblock %}
+
+
