@@ -1,6 +1,6 @@
 import sqlite3
 from flask import request, session, g, redirect, url_for, abort,\
-  render_template, flash, jsonify
+  render_template, make_response, flash, jsonify
 from contextlib import closing
 from datetime import datetime, date, timedelta
 
@@ -48,22 +48,26 @@ class Pagination(object):
         yield num
         last = num
 
+@app.route('/ng')
+def ng_root():
+  return render_template("ng_index.html")
+
 @app.route('/')
 def projects():
   projects=Project.all()
-  def summary():
-    sloc = 0
-    floc = 0
-    for p in projects:
-      sloc0, floc0 = p.metr() 
-      sloc += sloc0
-      floc += floc0
-    codefat = 100 * (floc/sloc) if sloc != 0 else .0
-    codefat_s = "%.2f" % codefat
-    codefat_i, codefat_f = codefat_s.split(".")
-    return dict(codefat_i=codefat_i,codefat_f=codefat_f,total_sloc=sloc,total_floc="%.2f" % floc)
-  return render_template('projects.html',projects=projects,summary=summary())
+  return render_template('projects.html',projects=projects,summary=summary(projects))
 
+def summary(projects):
+  sloc = 0
+  floc = 0
+  for p in projects:
+    sloc0, floc0 = p.metr() 
+    sloc += sloc0
+    floc += floc0
+  codefat = 100 * (floc/sloc) if sloc != 0 else .0
+  codefat_s = "%.2f" % codefat
+  codefat_i, codefat_f = codefat_s.split(".")
+  return dict(codefat_i=codefat_i,codefat_f=codefat_f,total_sloc=sloc,total_floc="%.2f" % floc)
 
 @app.route('/project/<int:project_id>', defaults={'page': 1})
 @app.route('/project/<int:project_id>/<int:page>')
@@ -150,6 +154,11 @@ class Project(object):
     self.name = name
     self.commit = get_last_successful_commit_by_project(id)
 
+  def as_dict(self):
+    return dict(id=self.id, name=self.name, 
+      last_update=self.last_update, codefat=self.codefat,
+      sloc=self.sloc)
+        
   @property
   def last_update(self):
     if self.commit != None:

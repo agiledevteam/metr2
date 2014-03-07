@@ -1,4 +1,4 @@
-from flask import jsonify
+from flask import jsonify, json
 from datetime import datetime, date, timedelta
 import time
 from redis import Redis
@@ -7,11 +7,22 @@ import pickle
 from metrapp import app
 from metrapp.views import Project, get_db
 import git
+from metrapp.views import summary
+
+
+redis = Redis()
+API_PROJECTS_KEY = 'api:projects'
 
 @app.route('/api/projects')
 def api_projects():
-  data = [p.__dict__ for p in Project.all()]
-  return jsonify(result=data)
+  result = redis.get(API_PROJECTS_KEY)
+  if result == None:
+    projects = Project.all()
+    data = [p.as_dict() for p in projects]
+    result = json.dumps(dict(projects=data, summary=summary(projects)))
+    redis.set(API_PROJECTS_KEY, result)
+    redis.expire(API_PROJECTS_KEY, 3600)
+  return result
 
 def prec(f, n):
   return int(f*n)/float(n)
@@ -45,8 +56,6 @@ def api_trend():
   now = datetime.now()
   stats = [metr_day_projects(day, project_ids) for day in range(90)]
   return jsonify(result=stats)
-
-redis = Redis()
 
 def metr_day_project(by_when, project_id):
   "return (sloc, floc)"
