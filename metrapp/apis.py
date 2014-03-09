@@ -7,8 +7,9 @@ import pickle
 from metrapp import app
 from metrapp.views import Project, get_db
 import git
+from git import diff_tree
 from metrapp.views import summary
-
+from database import get_project, get_commits_by_project, get_commit
 
 redis = Redis()
 API_PROJECTS_KEY = 'api:projects'
@@ -29,23 +30,17 @@ def prec(f, n):
 
 @app.route('/api/project/<int:project_id>')
 def api_project(project_id):
-  # rev-list --first-parent (for better trend viewing)
-  # revs = git.rev_list_first_parent(get_db(), project_id)
-  # gather commits
-  cur = get_db().execute('''select 
-    sha1, timestamp, codefat, sloc 
-    from commits 
-    where project_id = ? and sloc > 0 and datetime(timestamp, 'unixepoch') > datetime('now', '-1 year')
-    order by timestamp''', 
-    [project_id])
-  commits = [(timestamp, prec(codefat, 100), sloc, sha1[:7]) for sha1, timestamp, codefat, sloc in cur.fetchall()]
-  return jsonify(result=commits)
+  project = get_project(project_id)
+  commits = get_commits_by_project(project_id)
+  return jsonify(project=project, commits=commits)
 
 @app.route('/api/commit/<int:project_id>/', defaults=dict(sha1='HEAD'))
 @app.route('/api/commit/<int:project_id>/<sha1>')
 def api_commit(project_id, sha1):
-  commit = git.get_commit(get_db(), project_id, sha1)
-  return jsonify(result=commit)
+  project = get_project(project_id)
+  commit = get_commit(project_id, sha1)
+  diffs = diff_tree(get_db(), project_id, sha1)
+  return jsonify(commit=commit,project=project,diffs=diffs)
 
 @app.route('/api/trend')
 def api_trend():

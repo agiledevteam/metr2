@@ -1,23 +1,6 @@
 
 angular.module('metrapp', ['ngRoute'])
 
-.factory('Projects', function() {
-  return [
-  	{'id': 0,
-  	 'name': 'metrapp0s',
-  	 'description': 'awesome project for code fat monitoring',
-  	 'site': 'http://codefat.lge.com'},
-  	{'id': 1,
-  	 'name': 'angularjs1', 
-     'description': 'this is for future of the web',
-     'site': 'http://angularjs.org'},
-    {'id': 2,
-     'name': 'angularjs2', 
-     'description': 'this is for future of the web',
-     'site': 'http://angularjs.org'}
-
-  ];
-})
  
 .config(function($routeProvider) {
   $routeProvider
@@ -25,13 +8,13 @@ angular.module('metrapp', ['ngRoute'])
       controller:'ListCtrl',
       templateUrl:'static/partials/projects.html'
     })
-    .when('/edit/:projectId', {
-      controller:'EditCtrl',
-      templateUrl:'static/partials/detail.html'
+    .when('/project/:projectId', {
+      controller:'ProjectCtrl',
+      templateUrl:'static/partials/project.html'
     })
-    .when('/new', {
-      controller:'CreateCtrl',
-      templateUrl:'static/partials/detail.html'
+    .when('/commit/:projectId/:commitId', {
+      controller:'CommitCtrl',
+      templateUrl:'static/partials/commit.html'
     })
     .otherwise({
       redirectTo:'/'
@@ -40,20 +23,27 @@ angular.module('metrapp', ['ngRoute'])
  
 .controller('ListCtrl', function($scope, $http) {
   $http.get('api/projects').success(function(data) {
-    console.log(data);
     $scope.summary = data['summary'];
     $scope.projects = data['projects'];
   });
 })
  
-.controller('CreateCtrl', function($scope, $location, $timeout, Projects) {
-  $scope.save = function() {
-    Projects.$add($scope.project, function() {
-      $timeout(function() { $location.path('/'); });
-    });
-  };
+.controller('ProjectCtrl', function($scope, $routeParams, $http) {
+  $http.get('api/project/' + $routeParams.projectId).success(function(data) {
+    $scope.project = data['project'];
+    $scope.summary = data['summary'];
+    $scope.commits = data['commits'];
+  });
 })
- 
+
+.controller('CommitCtrl', function($scope, $routeParams, $http) {
+  $http.get('api/commit/' + $routeParams.projectId + '/' + $routeParams.commitId).success(function(data) {
+    $scope.project = data['project'];
+    $scope.commit = data['commit'];
+    $scope.diffs = data['diffs'];
+  });
+})
+
 .controller('EditCtrl',
   function($scope, $location, $routeParams, Projects) {
     $scope.projectId = $routeParams.projectId;

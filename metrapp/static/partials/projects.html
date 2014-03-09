@@ -1,6 +1,4 @@
- <h1 class="page-header">Overview <small id='project_count'></small>
- 	<!--a href="{{ url_for('update_repositories') }}" class="btn">update</a-->
- </h1>
+ <h1 class="page-header">Overview</h1>
  <div class="container">
  	<div class="row">
  		<div class="col-md-4">
@@ -17,11 +15,13 @@
 </div>
 
 <h2 class="sub-header">{{(projects|filter:q).length}} Projects</h2>
-<div class="row">
-	<input type="search" class="search-query" placeholder="project filter" ng-model="q" />
+<div class="col-md-4 col-md-offset-8">
+  <div class="input-group">
+    <span class="input-group-addon"><span class="glyphicon glyphicon-filter"></span></span>
+    <input type="search" class="form-control search-query" placeholder="Search project..." ng-model="q" />
+  </div>
 </div>
 <div class="table-responsive">
-
  	<table class="table table-condensed">
  		<thead>
  			<tr>

@@ -1,6 +1,6 @@
 import sqlite3
 from flask import request, session, g, redirect, url_for, abort,\
-  render_template, make_response, flash, jsonify
+  render_template, make_response, send_file, flash, jsonify
 from contextlib import closing
 from datetime import datetime, date, timedelta
 
@@ -50,7 +50,7 @@ class Pagination(object):
 
 @app.route('/ng')
 def ng_root():
-  return render_template("ng_index.html")
+  return send_file("templates/ng_index.html")
 
 @app.route('/')
 def projects():
@@ -73,20 +73,13 @@ def summary(projects):
 @app.route('/project/<int:project_id>/<int:page>')
 def project(project_id,page):
   project = Project.get(project_id)
-  def summary():
-    sloc, floc = project.metr()
-    codefat = 100 * (floc/sloc) if sloc != 0 else .0
-    codefat_s = "%.2f" % codefat
-    codefat_i, codefat_f = codefat_s.split(".")
-    return dict(codefat_i=codefat_i,codefat_f=codefat_f,total_sloc=sloc,total_floc="%.2f" % floc)
-  
   commits = get_commits_by_project(project_id)
 
   count = len(commits)
   pagination = Pagination(page, PER_PAGE, count)
   commits = commits[(page-1)*PER_PAGE:page*PER_PAGE]
 
-  return render_template('project.html', project=project, summary=summary(), commits=commits, pagination=pagination)
+  return render_template('project.html', project=project, summary=summary([project]), commits=commits, pagination=pagination)
 
 @app.route('/users', defaults={'page': 1})
 @app.route('/users/<int:page>')

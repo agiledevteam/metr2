@@ -7,3 +7,4 @@ config.py
 .DS_Store
 *.db-journal
 metr
+node_modules
