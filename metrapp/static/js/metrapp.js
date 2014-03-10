@@ -1,5 +1,5 @@
 
-angular.module('metrapp', ['ngRoute'])
+angular.module('metrapp', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.pagination'])
 
  
 .config(function($routeProvider) {
@@ -37,6 +37,7 @@ angular.module('metrapp', ['ngRoute'])
 })
  
 .controller('ProjectCtrl', function($scope, $routeParams, $http) {
+  initPagination($scope);
   $http.get('api/project/' + $routeParams.projectId).success(function(data) {
     $scope.project = data['project'];
     $scope.summary = data['summary'];
@@ -53,14 +54,34 @@ angular.module('metrapp', ['ngRoute'])
 })
 
 .controller('UsersCtrl', function($scope, $http) {
+  initPagination($scope);
   $http.get('api/users').success(function(data) {
     $scope.users = data['users'];
   });
 })
 
 .controller('UserCtrl', function($scope, $routeParams, $http) {
+  initPagination($scope);
   $http.get('api/user/' + $routeParams.userId).success(function(data) {
     $scope.user = data['user'];
     $scope.commits = data['commits']
   });
 })
+
+.filter('page', function() {
+    return function(array, currentPage, pageSize) {
+      var start = (currentPage-1) * pageSize;
+      var end = currentPage * pageSize
+      return array.slice(start, end);
+    }
+});
+
+function initPagination($scope) {
+  $scope.currentPage = 1;
+  $scope.pageSize = 20;
+  $scope.pageStart = 1;
+  $scope.$watch('currentPage', function() {
+    $scope.pageStart = 1 + ($scope.currentPage - 1) * $scope.pageSize;
+  });
+
+}

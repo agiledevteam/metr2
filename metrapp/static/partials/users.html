@@ -9,20 +9,20 @@
   </div>
 </div>
 <div class="table-responsive">
-  <table id='mytable' class="table table-condensed">
+  <table class="table table-condensed">
     <thead>
      <tr>
       <th>No.</th>
       <th>Author</th>
       <th># of Commits</th>
-      <th>&Sigma; &Delta; SLOC</th>
-      <th>&Sigma; &Delta; FLOC</th>
+      <th>&Sigma;&Delta;SLOC</th>
+      <th>&Sigma;&Delta;FLOC</th>
       <th>Projects</th>
     </tr>
   </thead>
   <tbody>
-    <tr ng-repeat="user in users | filter:q">
-      <td>{{$index + 1}}</td>
+    <tr ng-repeat="user in users | filter:q | page:currentPage:pageSize">
+      <td>{{$index + pageStart}}</td>
       <td><a href="#/user/{{user.author}}">{{user.author}}</a></td>
       <td>{{user.no_commits}} </td>
       <td>{{user.sum_delta_sloc}}</td>
@@ -34,6 +34,7 @@
       </td>
     </tbody>
   </table>
+  <pagination total-items="(users|filter:q).length" items-per-page="pageSize" page="currentPage"></pagination>
 </div>
 
 

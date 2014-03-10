@@ -159,3 +159,5 @@ body {
 #clear{
     clear: both;
 }
+
+.nav, .pagination, .carousel, .panel-title a { cursor: pointer; }

@@ -35,8 +35,8 @@
 			</tr>
 		</thead>
 		<tbody>
-      <tr ng-repeat="commit in commits | filter: q">
-        <td>{{$index + 1}}</td>
+      <tr ng-repeat="commit in commits | filter: q | page:currentPage:pageSize">
+        <td>{{$index + pageStart}}</td>
         <td><a class="sha1" href="#/commit/{{project.id}}/{{commit.sha1}}">{{commit.sha1.substring(0,7)}}</a></td>
         <td><a href="#/commit/{{project.id}}/{{commit.sha1}}">{{commit.title}}</a></td>
         <td><a href="#/user/{{commit.author}}">{{commit.author}}</a></td>
@@ -47,4 +47,5 @@
       </tr>
 		</tbody>
 	</table>
+  <pagination class="pagination-sm" total-items="(commits|filter:q).length" items-per-page="pageSize" page="currentPage"></pagination>
 </div>
