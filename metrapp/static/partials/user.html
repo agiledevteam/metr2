@@ -1,0 +1,48 @@
+
+<h1 class="page-header">{{user.author}} </h1>
+<ul class="list-group">
+ <li class="list-group-item"># of Commits: {{user.no_commits}}</li>
+ <li class="list-group-item">Projects:
+  <span ng-repeat="project in user.projects | orderBy:'name'">
+    <a href="#/project/{{project.id}}" class="label label-default" >{{project.name}}</a>
+  </span>
+</li>
+<li class="list-group-item">&Sigma; &Delta;SLOC: {{user.sum_delta_sloc}}</li>
+<li class="list-group-item">&Sigma; &Delta;FLOC: {{user.sum_delta_floc}}</li>
+</ul>
+
+<h2 class="sub-header">{{commits.length}} Commit(s)</h2>
+<div class="row">
+  <div class="col-md-4 col-md-offset-8">
+    <div class="input-group">
+      <span class="input-group-addon"><span class="glyphicon glyphicon-filter"></span></span>
+      <input type="search" class="form-control search-query" placeholder="Search commit..." ng-model="q" />
+    </div>
+  </div>
+</div>
+<div class="table-responsive">
+  <table class="table table-condensed">
+   <thead>
+     <tr>
+       <th>ID</th>
+       <th>Project</th>
+       <th>Title</th>
+       <th>When</th>
+       <th>&Delta;SLOC</th>
+       <th>&Delta;FLOC</th>
+       <th>&Delta;Code Fat</th>
+     </tr>
+   </thead>
+   <tbody>
+    <tr ng-repeat="c in commits | filter:q">
+      <td><a class='sha1' href="#/commit/{{c.project_id}}/{{c.sha1}}">{{c.sha1.substring(0,7)}}</a></td>
+      <td><a href="#/project/{{c.project_id}}" class="label label-default">{{c.project_name}}</a></td>
+      <td><a href="#/commit/{{c.project_id}}/{{c.sha1}}">{{c.title}}</a></td>
+      <td>{{c.timestamp*1000|date:'short'}}</td>
+      <td>{{c.delta_sloc}}</td>
+      <td>{{c.delta_floc|number:2}}</td>
+      <td>{{c.delta_codefat|number:2}}%</td>
+    </tr>
+  </tbody>
+</table>
+</div>

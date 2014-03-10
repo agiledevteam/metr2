@@ -16,6 +16,14 @@ angular.module('metrapp', ['ngRoute'])
       controller:'CommitCtrl',
       templateUrl:'static/partials/commit.html'
     })
+    .when('/users/', {
+      controller:'UsersCtrl',
+      templateUrl:'static/partials/users.html'
+    })
+    .when('/user/:userId', {
+      controller:'UserCtrl',
+      templateUrl:'static/partials/user.html'
+    })
     .otherwise({
       redirectTo:'/'
     });
@@ -44,20 +52,15 @@ angular.module('metrapp', ['ngRoute'])
   });
 })
 
-.controller('EditCtrl',
-  function($scope, $location, $routeParams, Projects) {
-    $scope.projectId = $routeParams.projectId;
-    $scope.projects = Projects;
-    $scope.project = Projects[$routeParams.projectId];
-    
+.controller('UsersCtrl', function($scope, $http) {
+  $http.get('api/users').success(function(data) {
+    $scope.users = data['users'];
+  });
+})
 
-    $scope.destroy = function() {
-      delete $scope.projects[$scope.projectId];
-      $location.path('/');
-    };
- 
-    $scope.save = function() {
-      //$scope.project.$save();
-      $location.path('/');
-    };
-});
+.controller('UserCtrl', function($scope, $routeParams, $http) {
+  $http.get('api/user/' + $routeParams.userId).success(function(data) {
+    $scope.user = data['user'];
+    $scope.commits = data['commits']
+  });
+})

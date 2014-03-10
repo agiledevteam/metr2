@@ -9,7 +9,7 @@ from metrapp.views import Project, get_db
 import git
 from git import diff_tree
 from metrapp.views import summary
-from database import get_project, get_commits_by_project, get_commit
+from database import *
 
 redis = Redis()
 API_PROJECTS_KEY = 'api:projects'
@@ -41,6 +41,19 @@ def api_commit(project_id, sha1):
   commit = get_commit(project_id, sha1)
   diffs = diff_tree(get_db(), project_id, sha1)
   return jsonify(commit=commit,project=project,diffs=diffs)
+
+@app.route('/api/users')
+def api_users():
+  users = get_users()
+  map_project_ids_to_projects(users)
+  return jsonify(users=users)
+
+@app.route('/api/user/<author>')
+def api_user(author):
+  user = get_user(author)
+  commits = get_commits_by_author(author)
+  map_project_ids_to_projects([user])
+  return jsonify(user=user, commits=commits)
 
 @app.route('/api/trend')
 def api_trend():
