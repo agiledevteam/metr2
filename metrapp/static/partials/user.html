@@ -1,14 +1,14 @@
 
 <h1 class="page-header">{{user.author}} </h1>
 <ul class="list-group">
- <li class="list-group-item"># of Commits: {{user.no_commits}}</li>
+ <li class="list-group-item">#Commits: {{user.no_commits}}</li>
  <li class="list-group-item">Projects:
   <span ng-repeat="project in user.projects | orderBy:'name'">
     <a href="#/project/{{project.id}}" class="label label-default" >{{project.name}}</a>
   </span>
 </li>
-<li class="list-group-item">&Sigma; &Delta;SLOC: {{user.sum_delta_sloc}}</li>
-<li class="list-group-item">&Sigma; &Delta;FLOC: {{user.sum_delta_floc}}</li>
+<li class="list-group-item">&Sigma;&Delta;SLOC: {{user.sum_delta_sloc}}</li>
+<li class="list-group-item">&Sigma;&Delta;FLOC: {{user.sum_delta_floc}}</li>
 </ul>
 
 <h2 class="sub-header">{{commits.length}} Commit(s)</h2>
@@ -30,7 +30,7 @@
        <th>When</th>
        <th>&Delta;SLOC</th>
        <th>&Delta;FLOC</th>
-       <th>&Delta;Code Fat</th>
+       <th>&Delta;<abbr title="Code Fat">CF</abbr></th>
      </tr>
    </thead>
    <tbody>
@@ -38,7 +38,7 @@
       <td><a class='sha1' href="#/commit/{{c.project_id}}/{{c.sha1}}">{{c.sha1.substring(0,7)}}</a></td>
       <td><a href="#/project/{{c.project_id}}" class="label label-default">{{c.project_name}}</a></td>
       <td><a href="#/commit/{{c.project_id}}/{{c.sha1}}">{{c.title}}</a></td>
-      <td>{{c.timestamp*1000|date:'short'}}</td>
+      <td class='truncate'>{{c.timestamp*1000|date:'short'}}</td>
       <td>{{c.delta_sloc}}</td>
       <td>{{c.delta_floc|number:2}}</td>
       <td>{{c.delta_codefat|number:2}}%</td>

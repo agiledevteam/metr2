@@ -161,3 +161,9 @@ body {
 }
 
 .nav, .pagination, .carousel, .panel-title a { cursor: pointer; }
+
+.truncate {
+  white-space: nowrap; 
+  overflow: hidden; 
+  text-overflow: ellipsis;
+}

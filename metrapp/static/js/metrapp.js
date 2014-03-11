@@ -24,6 +24,10 @@ angular.module('metrapp', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.pagination']
       controller:'UserCtrl',
       templateUrl:'static/partials/user.html'
     })
+    .when('/diff', {
+      controller:'DiffCtrl',
+      templateUrl:'static/partials/diff.html'
+    })
     .otherwise({
       redirectTo:'/'
     });
@@ -50,6 +54,25 @@ angular.module('metrapp', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.pagination']
     $scope.project = data['project'];
     $scope.commit = data['commit'];
     $scope.diffs = data['diffs'];
+  });
+  $scope.url_for = function(diff) {
+    return buildUrl('#/diff', {
+      'projectId': $scope.project.id,
+      'filename': diff.new.filename,
+      'commitId': $scope.commit.sha1,
+      'fileId': diff.new.sha1,
+      'parentFileId': diff.old.sha1
+    });
+  };
+})
+
+.controller('DiffCtrl', function($scope, $routeParams, $http) {
+  var url = 'api/diff/' + $routeParams.projectId + '/'
+    + $routeParams.commitId + '/'
+    + $routeParams.parentFileId + '/'
+    + $routeParams.fileId;
+  $http.get(url).success(function(data) {
+    $scope.lines = data['lines'];
   });
 })
 
@@ -84,4 +107,17 @@ function initPagination($scope) {
     $scope.pageStart = 1 + ($scope.currentPage - 1) * $scope.pageSize;
   });
 
+}
+
+function buildUrl(url, parameters){
+  var qs = "";
+  for(var key in parameters) {
+    var value = parameters[key];
+    qs += encodeURIComponent(key) + "=" + encodeURIComponent(value) + "&";
+  }
+  if (qs.length > 0){
+    qs = qs.substring(0, qs.length-1); //chop off last "&"
+    url = url + "?" + qs;
+  }
+  return url;
 }

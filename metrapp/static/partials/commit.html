@@ -1,17 +1,15 @@
-<h1 class="page-header">{{commit.title}}</h1>
+<h1 class="page-header truncate">{{commit.title}}</h1>
 	<ul class="list-group">
 		<li class="list-group-item">Project: <a href="#/project/{{project.id}}">{{project.name}}</a></li>
-		<li class="list-group-item">Commit: <span class="sha1">{{commit.sha1}}</span></li>
-		<li class="list-group-item">Author: <a href="#/user/{{commit.author}}">{{commit.author}}</a> at {{commit.timestamp*1000|date}}</li>
-		<li class="list-group-item">Code Fat: {{commit.codefat|number:2}}% ({{commit.floc|number:2}}/{{commit.sloc}})</li>
-		<li class="list-group-item">Parents:
-		<ul class="list-inline"> 
-			<li ng-repeat="parent_id in commit.parents"><a href="#/commit/{{project.id}}/{{parent_id}}" class="sha1">{{parent_id.substring(0, 7)}}</a></li>
-		</ul>
-		</li>
 		<li class="list-group-item">
-		<pre>{{commit.message}}</pre>
-		</li> 
+			Commit: <span class="sha1">{{commit.sha1}}</span>
+			<ul class="list-inline" style="float:right">
+				<li ng-repeat="parent_id in commit.parents"><a href="#/commit/{{project.id}}/{{parent_id}}" class="sha1 badge">{{parent_id.substring(0, 7)}}</a></li>
+			</ul>
+		</li>
+		<li class="list-group-item">Author: <a href="#/user/{{commit.author}}">{{commit.author}}</a> at {{commit.timestamp*1000|date:'short'}}</li>
+		<li class="list-group-item">Code Fat: {{commit.codefat|number:2}}% ({{commit.floc|number:2}}/{{commit.sloc}})</li>
+		<li class="list-group-item"><pre>{{commit.message}}</pre></li> 
 	</ul>
 
 <h2 class="sub-header">File List: {{diffs.length}} file(s) <small>Java files only without tests</small></h2>
@@ -28,7 +26,7 @@
 		<tbody>
 			<tr ng-repeat="diff in diffs">
 				<td>{{$index+1}}</td>
-				<td> <a href='#/diff/{{project.id}}/{{commit.sha1}}/{{diff.old.sha1}}/{{diff.new.sha1}}' class="diff-status-{{diff.status}}"> {{diff.new.filename}} </a></td>
+				<td> <a href='{{url_for(diff)}}' class="diff-status-{{diff.status}}"> {{diff.new.filename}} </a></td>
 				<td>{{diff.old.sloc}} => {{diff.new.sloc}}</td>
 				<td>{{diff.old.codefat|number:2}}% => {{diff.new.codefat|number:2}}%</td>
 			</tr>

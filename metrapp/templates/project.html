@@ -26,10 +26,10 @@ function drawChart(json) {
   data.addColumn('number', 'Code Fat');
   data.addColumn('number', 'SLOC');
   
-  var result = json['result'];
+  var result = json['commits'];
   for (var i in result) {
     var row = result[i];
-    data.addRow([new Date(row[0]*1000), row[1], row[2]]);
+    data.addRow([new Date(row.timestamp*1000), row.codefat, row.sloc]);
   }
   var options = {
     series:{

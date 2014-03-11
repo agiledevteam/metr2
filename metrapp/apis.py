@@ -7,7 +7,6 @@ import pickle
 from metrapp import app
 from metrapp.views import Project, get_db
 import git
-from git import diff_tree
 from metrapp.views import summary
 from database import *
 
@@ -30,17 +29,22 @@ def prec(f, n):
 
 @app.route('/api/project/<int:project_id>')
 def api_project(project_id):
-  project = get_project(project_id)
+  project = Project.get(project_id)
   commits = get_commits_by_project(project_id)
-  return jsonify(project=project, commits=commits)
+  return jsonify(project=project.as_dict(), commits=commits, summary=summary([project]))
 
 @app.route('/api/commit/<int:project_id>/', defaults=dict(sha1='HEAD'))
 @app.route('/api/commit/<int:project_id>/<sha1>')
 def api_commit(project_id, sha1):
   project = get_project(project_id)
   commit = get_commit(project_id, sha1)
-  diffs = diff_tree(get_db(), project_id, sha1)
+  diffs = git.diff_tree(get_db(), project_id, sha1)
   return jsonify(commit=commit,project=project,diffs=diffs)
+
+@app.route('/api/diff/<int:project_id>/<sha1>/<old>/<new>')
+def api_diff(project_id, sha1, old, new):
+  lines = git.diff(get_db(), project_id, sha1, old, new)
+  return jsonify(lines=lines)
 
 @app.route('/api/users')
 def api_users():
