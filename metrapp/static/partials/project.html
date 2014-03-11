@@ -1,0 +1,51 @@
+<h1 class="page-header">{{project.name}}</h1>
+  <div class="container">
+    <div class="row">
+      <div class="col-md-4">
+        <ul class="list-group">
+          <li class="list-group-item">Code Fat: <span style="font-size: 5em;">{{summary.codefat_i}}<small>.{{summary.codefat_f}}%</small></span> </li>
+          <li class="list-group-item">Total SLOC: {{summary.total_sloc}} </li>
+          <li class="list-group-item">Total FLOC: {{summary.total_floc}} </li>
+        </ul>
+      </div>
+      <div class="col-md-8" id="chart_div">
+        loading..
+      </div>
+    </div>
+  </div>
+<h2 class="sub-header">{{commits.length}} Commit(s)</h2>
+<div class="col-md-4 col-md-offset-8">
+  <div class="input-group">
+    <span class="input-group-addon"><span class="glyphicon glyphicon-filter"></span></span>
+    <input type="search" class="form-control search-query" placeholder="Search commit..." ng-model="q" />
+  </div>
+</div>
+<div class="table-responsive">
+	<table class="table table-condensed">
+		<thead>
+			<tr>
+        <th>No.</th>
+				<th>ID</th>
+        <th>Title</th>
+				<th>Committed by</th>
+				<th>When</th>
+				<th>&Delta;SLOC</th>
+				<th>&Delta;FLOC</th>
+				<th>&Delta;<abbr title="Code Fat">CF</abbr></th>
+			</tr>
+		</thead>
+		<tbody>
+      <tr ng-repeat="commit in commits | filter: q | page:currentPage:pageSize">
+        <td>{{$index + pageStart}}</td>
+        <td><a class="sha1" href="#/commit/{{project.id}}/{{commit.sha1}}">{{commit.sha1.substring(0,7)}}</a></td>
+        <td><a href="#/commit/{{project.id}}/{{commit.sha1}}">{{commit.title}}</a></td>
+        <td><a href="#/user/{{commit.author}}">{{commit.author}}</a></td>
+        <td class='truncate'>{{commit.timestamp *1000|date:'short'}}</td>
+        <td>{{commit.delta_sloc}}</td>
+        <td>{{commit.delta_floc|number:2}}</td>
+        <td>{{commit.delta_codefat|number:2}}%</td>
+      </tr>
+		</tbody>
+	</table>
+  <pagination class="pagination-sm" total-items="(commits|filter:q).length" items-per-page="pageSize" page="currentPage"></pagination>
+</div>

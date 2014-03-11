@@ -1,4 +1,4 @@
-from flask import jsonify
+from flask import jsonify, json
 from datetime import datetime, date, timedelta
 import time
 from redis import Redis
@@ -7,34 +7,57 @@ import pickle
 from metrapp import app
 from metrapp.views import Project, get_db
 import git
+from metrapp.views import summary
+from database import *
+
+redis = Redis()
+API_PROJECTS_KEY = 'api:projects'
 
 @app.route('/api/projects')
 def api_projects():
-  data = [p.__dict__ for p in Project.all()]
-  return jsonify(result=data)
+  result = redis.get(API_PROJECTS_KEY)
+  if result == None:
+    projects = Project.all()
+    data = [p.as_dict() for p in projects]
+    result = json.dumps(dict(projects=data, summary=summary(projects)))
+    redis.set(API_PROJECTS_KEY, result)
+    redis.expire(API_PROJECTS_KEY, 3600)
+  return result
 
 def prec(f, n):
   return int(f*n)/float(n)
 
 @app.route('/api/project/<int:project_id>')
 def api_project(project_id):
-  # rev-list --first-parent (for better trend viewing)
-  # revs = git.rev_list_first_parent(get_db(), project_id)
-  # gather commits
-  cur = get_db().execute('''select 
-    sha1, timestamp, codefat, sloc 
-    from commits 
-    where project_id = ? and sloc > 0 and datetime(timestamp, 'unixepoch') > datetime('now', '-1 year')
-    order by timestamp''', 
-    [project_id])
-  commits = [(timestamp, prec(codefat, 100), sloc, sha1[:7]) for sha1, timestamp, codefat, sloc in cur.fetchall()]
-  return jsonify(result=commits)
+  project = Project.get(project_id)
+  commits = get_commits_by_project(project_id)
+  return jsonify(project=project.as_dict(), commits=commits, summary=summary([project]))
 
 @app.route('/api/commit/<int:project_id>/', defaults=dict(sha1='HEAD'))
 @app.route('/api/commit/<int:project_id>/<sha1>')
 def api_commit(project_id, sha1):
-  commit = git.get_commit(get_db(), project_id, sha1)
-  return jsonify(result=commit)
+  project = get_project(project_id)
+  commit = get_commit(project_id, sha1)
+  diffs = git.diff_tree(get_db(), project_id, sha1)
+  return jsonify(commit=commit,project=project,diffs=diffs)
+
+@app.route('/api/diff/<int:project_id>/<sha1>/<old>/<new>')
+def api_diff(project_id, sha1, old, new):
+  lines = git.diff(get_db(), project_id, sha1, old, new)
+  return jsonify(lines=lines)
+
+@app.route('/api/users')
+def api_users():
+  users = get_users()
+  map_project_ids_to_projects(users)
+  return jsonify(users=users)
+
+@app.route('/api/user/<author>')
+def api_user(author):
+  user = get_user(author)
+  commits = get_commits_by_author(author)
+  map_project_ids_to_projects([user])
+  return jsonify(user=user, commits=commits)
 
 @app.route('/api/trend')
 def api_trend():
@@ -45,8 +68,6 @@ def api_trend():
   now = datetime.now()
   stats = [metr_day_projects(day, project_ids) for day in range(90)]
   return jsonify(result=stats)
-
-redis = Redis()
 
 def metr_day_project(by_when, project_id):
   "return (sloc, floc)"
