@@ -294,7 +294,7 @@ def hunk_index(hunk):
   raise KeyError()
 
 def parse_diff_patch(patch, old, new):
-  lines = patch.splitlines()
+  lines = filter(lambda line: len(line) != 0, patch.splitlines())
   for hunk in iterate_hunks(lines):
     a, b = hunk_index(hunk)
     if old.startswith(a) and new.startswith(b):
