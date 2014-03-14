@@ -9,8 +9,8 @@
   <thead>
     <tr style="border-bottom:2px solid gray">
       <th><span ng-click="sortBy('name')">Name</span></th>
-      <th><span ng-click="sortBy('codefat')">CodeFat {{codefat()|number:2}}%</span></th>
-      <th><span ng-click="sortBy('sloc')">SLOC {{sloc()|number}}</span></th>
+      <th><span ng-click="sortBy('codefat')">CodeFat {{codefat|number:2}}%</span></th>
+      <th><span ng-click="sortBy('sloc')">SLOC {{sloc|number}}</span></th>
       <th><span ng-click="sortBy('timestamp')">Updated</span></th>
     </tr>
   </thead>
@@ -18,7 +18,7 @@
     <tr ng-repeat="project in projects | filter:q | orderBy:orderKey:reverseSort">
       <td class="data-cell"><a href="#/project/{{project.id}}">{{project.name}}</a></td>
       <td class="data-cell data-text">
-        <div class="bar" style="width:{{project.codefat*2|number:0}}px">&#8203;
+        <div class="bar highlight-{{project.codefat > codefat}}" style="width:{{project.codefat*2|number:0}}px">&#8203;
         </div>
         {{project.codefat | number:2}}%
       </td>

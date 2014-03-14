@@ -183,7 +183,15 @@ tbody>tr:hover {
 .bar {
   display: inline-block;
   width: 70px;/* we'll override this */
+  background-color: lightsteelblue;
+}
+
+.highlight-true {
   background-color: steelblue;
+}
+
+.highlight-false {
+  background-color: lightsteelblue;
 }
 
 td.data-cell {
