@@ -1,0 +1,34 @@
+<div class="col-md-4 col-md-offset-8">
+  <div class="input-group">
+    <span class="input-group-addon"><span class="glyphicon glyphicon-filter"></span></span>
+    <input type="search" class="form-control search-query" placeholder="Search project..." ng-model="q" />
+  </div>
+</div>
+
+<table>
+  <thead>
+    <tr style="border-bottom:2px solid gray">
+      <th><span ng-click="sortBy('name')">Name</span></th>
+      <th><span ng-click="sortBy('codefat')">CodeFat {{codefat()|number:2}}%</span></th>
+      <th><span ng-click="sortBy('sloc')">SLOC {{sloc()|number}}</span></th>
+      <th><span ng-click="sortBy('timestamp')">Updated</span></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr ng-repeat="project in projects | filter:q | orderBy:orderKey:reverseSort">
+      <td class="data-cell"><a href="#/project/{{project.id}}">{{project.name}}</a></td>
+      <td class="data-cell data-text">
+        <div class="bar" style="width:{{project.codefat*2|number:0}}px">&#8203;
+        </div>
+        {{project.codefat | number:2}}%
+      </td>
+      <td class="data-cell data-text">
+        <div class="bar" style="width:{{project.sloc / 1000.0|number:0}}px">&#8203;
+        </div>
+        {{project.sloc | number}}
+      </td>
+      <td class="data-cell">{{project.timestamp * 1000 | date:'short'}}</td>
+    </tr>
+  </tbody>
+</table>
+

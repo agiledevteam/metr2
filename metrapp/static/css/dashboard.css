@@ -167,3 +167,31 @@ body {
   overflow: hidden; 
   text-overflow: ellipsis;
 }
+
+table {
+  width: 100%;
+}
+
+th {
+  border-bottom: 2px solid #ddd;
+}
+
+tbody>tr:hover {
+  background: #ddd; 
+}
+
+.bar {
+  display: inline-block;
+  width: 70px;/* we'll override this */
+  background-color: steelblue;
+}
+
+td.data-cell {
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-right: 10px;
+}
+
+.data-text {
+  font-size: xx-small;
+}

@@ -138,5 +138,9 @@ def make_dict(cursor, row):
   return dict((cursor.description[idx][0], value) 
       for idx, value in enumerate(row))
 
+def query(q):
+  cur = get_db().execute(q)
+  return [make_dict(cur, row) for row in cur.fetchall()]
+
 def safe(val, default_value):
   return val if val != None else default_value

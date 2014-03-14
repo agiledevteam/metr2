@@ -1,11 +1,11 @@
 
-angular.module('metrapp', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.pagination'])
+angular.module('metrapp', ['metrServices', 'ngRoute', 'ui.bootstrap', 'ui.bootstrap.pagination'])
 
  
 .config(function($routeProvider) {
   $routeProvider
     .when('/', {
-      controller:'ListCtrl',
+      controller:'OverviewCtrl',
       templateUrl:'static/partials/projects.html'
     })
     .when('/project/:projectId', {
@@ -33,21 +33,18 @@ angular.module('metrapp', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.pagination']
     });
 })
  
-.controller('ListCtrl', function($scope, $http) {
-  $http.get('api/projects').success(function(data) {
-    $scope.summary = data['summary'];
-    $scope.projects = data['projects'];
-  });
+.controller('OverviewCtrl', function() {
 })
  
-.controller('ProjectCtrl', function($scope, $routeParams, $http) {
+.controller('ProjectCtrl', ['$scope', '$routeParams', '$http', 'ProjectList', function($scope, $routeParams, $http, ProjectList) {
+  $scope.projects = ProjectList.projects;
   initPagination($scope);
   $http.get('api/project/' + $routeParams.projectId).success(function(data) {
     $scope.project = data['project'];
     $scope.summary = data['summary'];
     $scope.commits = data['commits'];
   });
-})
+}])
 
 .controller('CommitCtrl', function($scope, $routeParams, $http) {
   $http.get('api/commit/' + $routeParams.projectId + '/' + $routeParams.commitId).success(function(data) {

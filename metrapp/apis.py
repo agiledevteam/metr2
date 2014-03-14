@@ -24,6 +24,18 @@ def api_projects():
     redis.expire(API_PROJECTS_KEY, 3600)
   return result
 
+@app.route('/api/projects2')
+def api_projects2():
+  result = query('''
+    select p.id, p.name, x.sloc, x.floc, x.codefat, x.timestamp
+    from projects p, 
+         (select project_id as id, sloc, floc, codefat, max(timestamp) as timestamp
+          from commits 
+          where sloc > 0 group by project_id) x 
+    where p.id = x.id
+    order by p.name''')
+  return json.dumps(result)
+
 def prec(f, n):
   return int(f*n)/float(n)
 
