@@ -1,6 +1,6 @@
 import redis
 r = redis.Redis()
-r.delete(r.keys("codefat:*"))
+r.delete(*r.keys("codefat:*"))
 
 from metrapp import app
 
