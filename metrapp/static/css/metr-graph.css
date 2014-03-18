@@ -1,0 +1,32 @@
+#content {
+	border-radius: 6px;
+	background-color: #f3f3f3;
+	font: 10px sans-serif;
+	width: 100%;
+}
+.chart {
+	width: 100%;
+	height: 300px;
+}
+
+.axis path, .axis line {
+	fill: none;
+	stroke: #333;
+	stroke-width: 0.5px;
+}
+.line {
+	fill: none;
+	stroke: steelblue;
+	stroke-width: 1.5px;
+}
+.line2 {
+	fill: none;
+	stroke: orange;
+	stroke-width: 1.5px;
+}
+.y.point {
+	fill: steelblue;
+}
+.y2.point {
+	fill: orange;
+}

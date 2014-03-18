@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="myApp">
+<head>
+	<title>Site trend</title>
+	<style type="text/css">
+	#content {
+		font: 10px sans-serif;
+	}
+	.chart {
+		width: 100%;
+		height: 300px;
+	}
+
+	.axis path, .axis line {
+		fill: none;
+		stroke: #333;
+		stroke-width: 0.5px;
+	}
+	.line {
+		fill: none;
+		stroke: steelblue;
+		stroke-width: 1.5px;
+	}
+	.line2 {
+		fill: none;
+		stroke: orange;
+		stroke-width: 1.5px;
+	}
+	.y.point {
+		fill: steelblue;
+	}
+	.y2.point {
+		fill: orange;
+	}
+	</style>
+</head>
+<body ng-controller="myController">
+
+	<trend data="data"></trend>
+
+	<script src="/static/js/angular.js"></script>
+	<script src="/static/js/d3.js"></script>
+	<script src="/static/js/metr-graph.js"></script>
+	<script>
+	angular.module('myApp', ['metrGraph']).
+	controller('myController', ['$scope', '$http', function($scope, $http){
+		$scope.data = [];
+		$http.get('/api/trend').success(function(data){
+			$scope.data = data.result;
+		});
+	}]);
+	</script>
+</body>
+</html>

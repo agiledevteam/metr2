@@ -1,5 +1,5 @@
 
-angular.module('metrapp', ['metrServices', 'ngRoute', 'ui.bootstrap', 'ui.bootstrap.pagination'])
+angular.module('metrapp', ['metrGraph', 'metrServices', 'ngRoute', 'ui.bootstrap', 'ui.bootstrap.pagination'])
 
  
 .config(function($routeProvider) {
@@ -33,8 +33,12 @@ angular.module('metrapp', ['metrServices', 'ngRoute', 'ui.bootstrap', 'ui.bootst
     });
 })
  
-.controller('OverviewCtrl', function() {
-})
+.controller('OverviewCtrl', ['$scope', '$http', function($scope, $http) {
+  $scope.data = []
+  $http.get('/api/trend').success(function(data){
+    $scope.data = data.result;
+  });
+}])
  
 .controller('ProjectCtrl', ['$scope', '$routeParams', '$http', 'ProjectList', function($scope, $routeParams, $http, ProjectList) {
   $scope.projects = ProjectList.projects;
