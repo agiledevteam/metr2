@@ -266,7 +266,7 @@ def hunk_lines(hunk):
 def iterate_hunks(lines):
   hunk = []
   for line in lines:
-    if line[0] == 'd': # diff
+    if line[0:4] == 'diff': # diff
       if len(hunk) != 0:
         yield hunk
         hunk = []
