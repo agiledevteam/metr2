@@ -34,20 +34,33 @@ angular.module('metrapp', ['metrGraph', 'metrServices', 'ngRoute', 'ui.bootstrap
 })
  
 .controller('OverviewCtrl', ['$scope', '$http', function($scope, $http) {
-  $scope.data = []
-  $http.get('/api/trend').success(function(data){
-    $scope.data = data.result;
+  $scope.data = [];
+  $scope.since = new Date(new Date().getFullYear(), 0, 1);
+  $http.get('/api/daily').success(function(data){
+    $scope.data = data.map(function(d){
+      d.date = new Date(d.date);
+      return d;
+    });
   });
 }])
  
-.controller('ProjectCtrl', ['$scope', '$routeParams', '$http', 'ProjectList', function($scope, $routeParams, $http, ProjectList) {
-  $scope.projects = ProjectList.projects;
+.controller('ProjectCtrl', ['$scope', '$routeParams', '$http', function($scope, $routeParams, $http) {
   initPagination($scope);
-  $http.get('api/project/' + $routeParams.projectId).success(function(data) {
+  $scope.projectId = $routeParams.projectId;
+  $scope.data = [];
+  $scope.since = new Date(new Date().getFullYear(), 0, 1);
+  $http.get('/api/daily?project_id=' + $scope.projectId).success(function(data){
+    $scope.data = data.map(function(d){
+      d.date = new Date(d.date);
+      return d;
+    });
+  });
+  $http.get('api/project/' + $scope.projectId).success(function(data) {
     $scope.project = data['project'];
     $scope.summary = data['summary'];
     $scope.commits = data['commits'];
   });
+
 }])
 
 .controller('CommitCtrl', function($scope, $routeParams, $http) {

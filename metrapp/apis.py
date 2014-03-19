@@ -1,4 +1,4 @@
-from flask import jsonify, json
+from flask import jsonify, json, request
 from datetime import datetime, date, timedelta
 import time
 from redis import Redis
@@ -9,6 +9,8 @@ from metrapp.views import Project, get_db
 import git
 from metrapp.views import summary
 from database import *
+from collections import OrderedDict
+from itertools import izip
 
 redis = Redis()
 API_PROJECTS_KEY = 'api:projects'
@@ -81,9 +83,40 @@ def api_trend():
   stats = [metr_day_projects(day, project_ids) for day in range(90)]
   return jsonify(result=stats)
 
-@app.route('/api/trend2')
-def api_trend2():
-  return jsonify(result=[])
+@app.route('/api/daily')
+def api_daily():
+  project_id = request.args.get('project_id', '')
+
+  def tuple_sum(a, b):
+    return tuple(x + y for x, y in izip(a, b))
+  def where_clause():
+    if project_id == '':
+      return ''
+    else:
+      return ' where project_id = ?'
+  def where_params():
+    if project_id == '':
+      return []
+    else:
+      return [project_id]
+  
+  matrix = dict()
+  for pid, date, sloc, floc in get_db().execute('''select 
+    project_id as pid, date(timestamp, 'unixepoch') as date, sloc, floc
+    from daily''' + where_clause(), where_params()):
+    if date in matrix:
+      matrix[date][pid] = (sloc, floc)
+    else:
+      matrix[date] = {pid:(sloc,floc)}
+  projects = dict()
+  result = []
+  for date in sorted(matrix.iterkeys()):
+    print date
+    projects.update(matrix[date])
+    sloc,floc = reduce(tuple_sum, projects.itervalues())
+    result.append(dict(date=date,sloc=sloc,codefat=100*floc/sloc))
+  return json.dumps(result)
+
 
 def metr_day_project(by_when, project_id):
   "return (sloc, floc)"
