@@ -24,6 +24,10 @@ If `pip install` fails, check the dependencies below
 
 ## dependencies
 
+* On Mac OSX,  (March 20, 2014)
+* use XCODE 5.0.2 command tool (clang)
+* XCODE 5.1 has some bug on command tool (clang)
+
 python-dev
 
     $ sudo apt-get install python-dev
