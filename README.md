@@ -1,4 +1,5 @@
-metr web app
+Metr is a web app for monitoring codefat of git repositories.
+Codefat is a experimental code metric which indicates how code looks bad. 
 
 # virtualenv
 
@@ -44,23 +45,40 @@ sqlite3
 
 redis
 
+* http://redis.io/topics/quickstart
+
 
 # config.py
 
     $ cp config.py.sample config.py
     $ vi config.py
 
-# init db
+Configure DATABASE (sqlite3 database filepath), GITDIR (directory for git repositories)
 
-    $ python
-    >>> from metrapp import init_db
-    >>> init_db()
 
-# start redis-server
+## initialize database
 
-* http://redis.io/topics/quickstart
+After configuring you need to initialize database by executing following:
 
-# run
+    $ python metrdb.py
+
+# run Metr
+
+You can run Metr using embedded web server.
 
     $ python runserver.py
 
+Alternatively you can run Metr as WSGI application with Apache. Refer to apache-conf/* files.
+
+# add git repository
+
+For now, there is no web interface to add a git repository. Use plain sqlite3 CLI:
+
+    $ sqlite3 metr.db
+    > insert into projects (name, repository, branch) values ('MyProject', 'git://...', 'master');
+
+# update metr
+
+    $ python update_all.py
+
+First time running update will take long (cloning repo, processing all commits/blobs).
