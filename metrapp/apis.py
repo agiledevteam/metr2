@@ -81,6 +81,10 @@ def api_trend():
   stats = [metr_day_projects(day, project_ids) for day in range(90)]
   return jsonify(result=stats)
 
+@app.route('/api/trend2')
+def api_trend2():
+  return jsonify(result=[])
+
 def metr_day_project(by_when, project_id):
   "return (sloc, floc)"
   def update():

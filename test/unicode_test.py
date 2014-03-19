@@ -1,17 +1,22 @@
 # -*- coding: utf-8 -*-
 import unittest
 import sqlite3
-from metrapp import views, app, init_db
+from metrapp import views, app, init_db, database
+import tempfile
+import os
 
 class UnicodeTest(unittest.TestCase):
+
     def setUp(self):
+        self.db_fd, app.config['DATABASE'] = tempfile.mkstemp()
         app.config['TESTING'] = True
-        app.config['DATABASE'] = ':memory:'
-        self.db = views.connect_db()
-        init_db.create_tables(self.db)
+        self.app = app.test_client()
+        init_db.init_db()
+        self.db = database.connect_db()
 
     def tearDown(self):
-        self.db.close()
+        os.close(self.db_fd)
+        os.unlink(app.config['DATABASE'])
         
     def testInsertUnicodeCharInEmail(self):
         email = u'“jooyung.han@lge.com”'

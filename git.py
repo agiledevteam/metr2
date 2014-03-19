@@ -1,4 +1,4 @@
-from metrapp import app
+from metrapp import app, database
 from collections import namedtuple
 from subprocess import call, check_output
 from os import path
@@ -6,8 +6,6 @@ import random
 import re
 import config
 from metr import metr, stat_sum, Stat
-import logging
-import update_delta
 from pygit2 import Repository
 
 test_pattern = re.compile('tests?/', re.IGNORECASE)
@@ -125,7 +123,6 @@ def update(db, project_id):
   git = load_git(db, project_id)
   git.update()
   metr_repository(git, db, project_id)
-  update_delta.update_delta(db)
 
 def metr_repository(git, db, project_id):
   cur = db.execute('select sha1 from commits where project_id = ?', (project_id,))
@@ -134,9 +131,7 @@ def metr_repository(git, db, project_id):
 
   for commitid in commits_in_git - commits_in_db:
     commit = metr_commit(commitid, git)
-    db.execute('insert into commits (project_id, author, timestamp, message, parents, sha1, sloc, floc, codefat) values (?,?,?,?,?,?,?,?,?)', 
-            [project_id, commit.author, commit.timestamp, commit.message, commit.parents, commit.sha1, commit.sloc, commit.floc, commit.codefat])
-    db.commit()
+    insert_commit(db, project_id, commit)
 
 def metr_commit(commitid, git):
   """
@@ -340,4 +335,9 @@ def is_java(filename):
   return test_pattern.search(filename) == None and ext == ".java"
    
    
+def insert_commit(db, project_id, commit):
+  db.execute('insert into commits (project_id, author, timestamp, message, parents, sha1, sloc, floc, codefat) values (?,?,?,?,?,?,?,?,?)', 
+        [project_id, commit.author, commit.timestamp, commit.message, commit.parents, commit.sha1, commit.sloc, commit.floc, commit.codefat])
+  db.commit()
+
 

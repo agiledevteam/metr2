@@ -144,3 +144,6 @@ def query(q):
 
 def safe(val, default_value):
   return val if val != None else default_value
+
+
+    
