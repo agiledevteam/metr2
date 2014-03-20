@@ -111,7 +111,6 @@ def api_daily():
   projects = dict()
   result = []
   for date in sorted(matrix.iterkeys()):
-    print date
     projects.update(matrix[date])
     sloc,floc = reduce(tuple_sum, projects.itervalues())
     result.append(dict(date=date,sloc=sloc,codefat=100*floc/sloc))
