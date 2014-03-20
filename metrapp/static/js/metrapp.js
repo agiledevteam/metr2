@@ -1,5 +1,11 @@
 
-angular.module('metrapp', ['metrGraph', 'metrServices', 'ngRoute', 'ui.bootstrap', 'ui.bootstrap.pagination'])
+angular.module('metrapp', [
+  'metrGraph', 
+  'metrServices', 
+  'ngRoute',
+  'ngSanitize',
+  'ui.bootstrap', 
+  'ui.bootstrap.pagination'])
 
  
 .config(function($routeProvider) {
@@ -105,12 +111,18 @@ angular.module('metrapp', ['metrGraph', 'metrServices', 'ngRoute', 'ui.bootstrap
   });
 })
 
+.filter('shorten', function() {
+  return function(title) {
+    // if title starts with [..] tags
+    return title.replace(/^(\[.*\])(.*)/, '<small title="$1">[..]</small>$2');
+  }
+})
 .filter('page', function() {
-    return function(array, currentPage, pageSize) {
-      var start = (currentPage-1) * pageSize;
-      var end = currentPage * pageSize
-      return array.slice(start, end);
-    }
+  return function(array, currentPage, pageSize) {
+    var start = (currentPage-1) * pageSize;
+    var end = currentPage * pageSize
+    return array.slice(start, end);
+  }
 });
 
 function initPagination($scope) {

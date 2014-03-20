@@ -1,9 +1,11 @@
-<h1 class="page-header truncate">{{commit.title}}</h1>
+<h1 class="page-header truncate" ng-bind-html="commit.title|shorten"></h1>
 	<ul class="list-group">
 		<li class="list-group-item">Project: <a href="#/project/{{project.id}}">{{project.name}}</a></li>
 		<li class="list-group-item">
-			Commit: <span class="sha1">{{commit.sha1}}</span>
-			<ul class="list-inline" style="float:right">
+			<div style="float:left">
+				Commit: <span class="sha1">{{commit.sha1}}</span>
+			</div>
+			<ul class="list-inline">
 				<li ng-repeat="parent_id in commit.parents"><a href="#/commit/{{project.id}}/{{parent_id}}" class="sha1 badge">{{parent_id.substring(0, 7)}}</a></li>
 			</ul>
 		</li>

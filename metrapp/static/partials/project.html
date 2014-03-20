@@ -38,7 +38,7 @@
       <tr ng-repeat="commit in commits | filter: q | page:currentPage:pageSize">
         <td>{{$index + pageStart}}</td>
         <td><a class="sha1" href="#/commit/{{project.id}}/{{commit.sha1}}">{{commit.sha1.substring(0,7)}}</a></td>
-        <td><a href="#/commit/{{project.id}}/{{commit.sha1}}">{{commit.title}}</a></td>
+        <td><a href="#/commit/{{project.id}}/{{commit.sha1}}" ng-bind-html="commit.title|shorten"></a></td>
         <td><a href="#/user/{{commit.author}}">{{commit.author}}</a></td>
         <td class='truncate'>{{commit.timestamp *1000|date:'short'}}</td>
         <td>{{commit.delta_sloc}}</td>
