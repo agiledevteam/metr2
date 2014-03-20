@@ -48,11 +48,11 @@ class Pagination(object):
         yield num
         last = num
 
-@app.route('/ng')
+@app.route('/')
 def ng_root():
   return send_file("templates/ng_index.html")
 
-@app.route('/')
+@app.route('/old')
 def projects():
   projects=Project.all()
   return render_template('projects.html',projects=projects,summary=summary(projects))

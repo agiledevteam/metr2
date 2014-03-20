@@ -54,7 +54,7 @@ angular.module('metrapp', [
   initPagination($scope);
   $scope.projectId = $routeParams.projectId;
   $scope.data = [];
-  $scope.since = new Date(new Date().getFullYear(), 0, 1);
+  $scope.since = new Date(new Date().getFullYear()-1, 0, 1);
   $http.get('/api/daily?project_id=' + $scope.projectId).success(function(data){
     $scope.data = data.map(function(d){
       d.date = new Date(d.date);
