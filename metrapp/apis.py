@@ -88,7 +88,7 @@ def api_daily():
   project_id = request.args.get('project_id', '')
 
   def tuple_sum(a, b):
-    return tuple(x + y for x, y in izip(a, b))
+    return (a[0]+b[0], a[1]+b[1])
   def where_clause():
     if project_id == '':
       return ''
@@ -113,7 +113,8 @@ def api_daily():
   for date in sorted(matrix.iterkeys()):
     projects.update(matrix[date])
     sloc,floc = reduce(tuple_sum, projects.itervalues())
-    result.append(dict(date=date,sloc=sloc,codefat=100*floc/sloc))
+    codefat = 100*floc/sloc if sloc!=0 else 0
+    result.append(dict(date=date,sloc=sloc,codefat=codefat))
   return json.dumps(result)
 
 

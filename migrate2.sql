@@ -8,7 +8,7 @@ CREATE TABLE daily (
 );
 
 INSERT INTO daily (project_id, timestamp, sloc, floc) 
-	SELECT project_id, timestamp, sloc, floc 
+	SELECT project_id, max(timestamp), sloc, floc 
 	FROM commits
 	WHERE sloc > 0 
 	GROUP BY project_id, DATE(timestamp, 'unixepoch');
