@@ -119,9 +119,13 @@ angular.module('metrapp', [
 })
 .filter('page', function() {
   return function(array, currentPage, pageSize) {
-    var start = (currentPage-1) * pageSize;
-    var end = currentPage * pageSize
-    return array.slice(start, end);
+    if (array instanceof Array) {
+      var start = (currentPage-1) * pageSize;
+      var end = currentPage * pageSize
+      return array.slice(start, end);      
+    } else {
+      return [];
+    }
   }
 });
 
