@@ -206,6 +206,7 @@ def update(project_id):
 @app.route('/updateall')
 def update_repositories():
   for p in Project.all():
+    print(p.name)
     git.update(get_db(), p.id)
   return redirect(url_for('projects'))
 

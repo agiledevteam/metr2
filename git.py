@@ -61,20 +61,7 @@ class Git(object):
   def parse_commit(self, commitid):
     "Parse commit object info and return (author,timestamp,message,parents)"
     obj = check_output(self.base_cmd + ['log', '-1', '--pretty=raw', commitid])
-    lines = obj.splitlines()
-    index = lines.index('')
-    message = '\n'.join(lines[index+1:])
-
-    author = 'unknown'
-    timestamp = 0
-    parents = []
-    for line in lines[:index]:
-      values = line.split()
-      if values[0] == 'author':
-        author, timestamp = values[-3].strip('<>').lower(), int(values[-2])
-      elif values[0] == 'parent':
-        parents += [values[1]]
-    return decode(author), timestamp, decode(message), " ".join(parents)
+    return parse_commit_(obj)
 
   def ls_tree(self, treeish):
     """ Returns list of Entry(sha1, name) """
@@ -341,3 +328,20 @@ def insert_commit(db, project_id, commit):
   db.commit()
 
 
+def parse_commit_(obj):
+  lines = obj.splitlines()
+  index = lines.index('')
+  message = '\n'.join(lines[index+1:])
+
+  author = 'unknown'
+  timestamp = 0
+  parents = []
+  for line in lines[:index]:
+    values = line.split()
+    if len(values) == 0: # such as mergetag object can contain " " line
+      continue
+    if values[0] == 'author':
+      author, timestamp = values[-3].strip('<>').lower(), int(values[-2])
+    elif values[0] == 'parent':
+      parents += [values[1]]
+  return decode(author), timestamp, decode(message), " ".join(parents)

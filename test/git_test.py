@@ -67,3 +67,38 @@ class GitTest(unittest.TestCase):
 		row = cur.fetchone()
 		assert row == (-13, -2, 5)
 
+
+	def testCommitObjectWithMergeTagObject(self):
+		author, timestamp, message, parents = git.parse_commit_("""tree 79adda7cddb4432e4313dc7aa3247da9e4b4c0a2
+parent b10d4c6bcfc3786bcb49876f3bc2f060df0b8f6b
+parent 7422f735fc532f7a862d11805a641d1cb5e29569
+author Steve Kondik <shade@chemlab.org> 1360737540 -0800
+committer Steve Kondik <shade@chemlab.org> 1360737540 -0800
+mergetag object 7422f735fc532f7a862d11805a641d1cb5e29569
+ type commit
+ tag android-4.2.2_r1
+ tagger The Android Open Source Project <initial-contribution@android.com> 1360687897 -0800
+ 
+ Android 4.2.2 release 1
+ -----BEGIN PGP SIGNATURE-----
+ Version: GnuPG v1.4.11 (GNU/Linux)
+ 
+ iEYEABECAAYFAlEacxkACgkQ6K0/gZqxDnjP+wCfVAQRn7xWBxnoSK+09qJg+MMG
+ kvUAnRbWjzyUD52TLKkrpf7kz4hxB1VG
+ =EPUN
+ -----END PGP SIGNATURE-----
+
+Merge tag 'android-4.2.2_r1' of https://android.googlesource.com/platform/packages/apps/Browser into 1.1
+
+Android 4.2.2 release 1""")
+		assert "shade@chemlab.org" == author
+		assert 1360737540 == timestamp
+		assert """Merge tag 'android-4.2.2_r1' of https://android.googlesource.com/platform/packages/apps/Browser into 1.1
+
+Android 4.2.2 release 1""" == message
+
+
+
+
+
+
