@@ -33,3 +33,19 @@ app.controller('ProjectListCtrl', ['$scope', 'ProjectList', function($scope, Pro
   }
 }]);
 
+app.controller('UserProfileController', ['$scope', function($scope){
+  $scope.user = {
+    profile: [
+      {
+        project: "auction house",
+        delta_sloc: 100,
+        delta_floc: 20
+      },
+      {
+        project: "plyj",
+        delta_sloc: 10,
+        delta_floc: -2
+      }
+    ]
+  }
+}]);

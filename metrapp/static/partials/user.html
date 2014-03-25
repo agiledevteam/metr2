@@ -1,15 +1,22 @@
 
-<h1 class="page-header">{{user.author}} </h1>
-<ul class="list-group">
- <li class="list-group-item">#Commits: {{user.no_commits}}</li>
- <li class="list-group-item">Projects:
-  <span ng-repeat="project in user.projects | orderBy:'name'">
-    <a href="#/project/{{project.id}}" class="label label-default" >{{project.name}}</a>
-  </span>
-</li>
-<li class="list-group-item">&Sigma;&Delta;SLOC: {{user.sum_delta_sloc}}</li>
-<li class="list-group-item">&Sigma;&Delta;FLOC: {{user.sum_delta_floc}}</li>
-</ul>
+<h1 class="page-header">{{user.author}}</h1>
+<div class="row">
+  <div class="col-md-8">
+    <ul class="list-group">
+      <li class="list-group-item">#Commits: {{user.no_commits}}</li>
+      <li class="list-group-item">Projects:
+        <span ng-repeat="project in user.projects | orderBy:'name'">
+          <a href="#/project/{{project.id}}" class="label label-default" >{{project.name}}</a>
+        </span>
+      </li>
+      <li class="list-group-item">&Sigma;&Delta;SLOC: {{user.sum_delta_sloc}}</li>
+      <li class="list-group-item">&Sigma;&Delta;FLOC: {{user.sum_delta_floc}}</li>
+    </ul>
+  </div>
+  <div class="col-md-4" ng-controller="UserProfileController">
+    <user-profile data="user.profile"></user-profile>
+  </div>
+</div>
 
 <h2 class="sub-header">{{commits.length}} Commit(s)</h2>
 <div class="row">
