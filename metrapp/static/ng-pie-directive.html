@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	
+</head>
+<body ng-app="myApp" ng-init="charts=[[8,2,9],[8,3,7],[2,5,9]]">
+	<donut-chart data="chart" ng-repeat="chart in charts"></donut-chart>
+	<script src="/static/js/angular.min.js"></script>
+	<script src="/static/js/d3.min.js"></script>
+	<script>
+	
+	</script>
+
+	<script>
+	var myApp=angular.module('myApp', []);
+	myApp.directive('donutChart', function() {
+
+		return {
+			restrict: 'E',
+			scope: {data: '='},
+			link: function(scope, element, attr) {
+				var color = d3.scale.category10();
+				var data = scope.data;
+
+				var width = 300;
+				var height = 300;
+				var min = Math.min(width, height);
+				var svg = d3.select('body').append('svg');
+				var pie = d3.layout.pie();
+				var arc = d3.svg.arc()
+					.outerRadius(min / 2 * 0.9)
+					.innerRadius(min / 2 * 0.5);
+
+				svg.attr({width: width, height: height});
+				var g = svg.append('g')
+					.attr('transform', 'translate(' + width/2 + ', ' + height/2 + ')');
+
+				g.selectAll('path').data(pie(data))
+					.enter().append('path')
+					.style('stroke', 'white')
+					.attr('d', arc)
+					.style('fill', function(d, i) { return color(i); });
+
+			}
+
+		};
+	});
+	</script>
+</body>
+</html>

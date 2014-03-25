@@ -1,0 +1,27 @@
+<html>
+<head>
+	<title></title>
+</head>
+<body ng-app='myApp' ng-init='range={value:50}'>
+
+	<div ng-controller="HelloController">
+		<input type="range" ng-model="range.value"></input>
+		<input type="range" ng-model="range.value"></input>
+	</div>
+	
+	<div ng-controller="HelloController">
+		<input type="range" ng-model="range.value"></input>
+		<input type="range" ng-model="range.value"></input>
+	</div>
+	
+	
+	<script src="/static/js/angular.min.js"></script>
+
+	<script>
+	var app = angular.module('myApp', []);
+	app.controller('HelloController', function($scope) {
+		$scope.aas=50;
+	});
+	</script>
+</body>
+</html>

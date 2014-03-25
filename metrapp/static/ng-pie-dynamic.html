@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	
+</head>
+<body ng-app="myApp" ng-init="chart=[{value:10},{value:20},{value:30}]">
+	<button ng-click="chart.push({value:50})">add slice</button>
+	<button ng-click="chart.pop()">remove slice</button>
+
+	<input type="range" ng-model="slice.value" ng-repeat="slice in chart track by $index"></input>
+
+	<donut-chart data="chart"></donut-chart>
+	<script src="/static/js/angular.min.js"></script>
+	<script src="/static/js/d3.min.js"></script>
+	<script>
+	
+	</script>
+
+	<script>
+	var myApp=angular.module('myApp', []);
+	myApp.directive('donutChart', function() {
+
+		return {
+			restrict: 'E',
+			scope: {data: '='},
+			link: function(scope, element, attr) {
+				var color = d3.scale.category10();
+				var data = scope.data;
+
+				var width = 300;
+				var height = 300;
+				var min = Math.min(width, height);
+				var svg = d3.select('body').append('svg');
+				var pie = d3.layout.pie();
+				pie.sort(null);
+				pie.value(function(d){return d.value;});
+				var arc = d3.svg.arc()
+					.outerRadius(min / 2 * 0.9)
+					.innerRadius(min / 2 * 0.5);
+
+				svg.attr({width: width, height: height});
+				var g = svg.append('g')
+					.attr('transform', 'translate(' + width/2 + ', ' + height/2 + ')');
+
+				var arcs = g.selectAll('path');
+
+				scope.$watch('data', function(data){
+					arcs = arcs.data(pie(data));
+
+					arcs.exit().remove();
+
+					arcs.enter().append('path')
+					.style('stroke', 'white')
+					.style('fill', function(d, i) { return color(i); });
+
+					arcs.attr('d', arc);
+
+				}, true);
+			}
+
+		};
+	});
+	</script>
+</body>
+</html>

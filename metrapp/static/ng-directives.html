@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	
+</head>
+<body ng-app="myApp">
+	<script src="/static/js/angular.min.js"></script>
+	<script src="/static/js/d3.min.js"></script>
+	
+	<h1>HTML5 UI element</h1>
+	<input type="range" min="1" max="1000" value="0" style="width:100%"></input>
+	<input type="date" value="1989-01-23"></input>
+	
+	<h1>Custom directives</h1>
+	<hello-world></hello-world>
+	<script>
+	var myApp=angular.module('myApp', []);
+	myApp.directive('helloWorld', function() {
+
+		return {
+			restrict: 'E',
+			link: function(scope, element, attr) {
+				element.text('hello world')
+			}
+
+		};
+	});
+	</script>
+</body>
+</html>

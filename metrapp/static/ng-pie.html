@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	
+</head>
+<body ng-app="myApp">
+	<script src="/static/js/angular.min.js"></script>
+	<script src="/static/js/d3.min.js"></script>
+	<script>
+	var color = d3.scale.category10();
+	var data = [10, 20, 30];
+
+	var width = 300;
+	var height = 300;
+	var min = Math.min(width, height);
+	var svg = d3.select('body').append('svg');
+	var pie = d3.layout.pie();
+	var arc = d3.svg.arc()
+		.outerRadius(min / 2 * 0.9)
+		.innerRadius(min / 2 * 0.5);
+
+	svg.attr({width: width, height: height});
+	var g = svg.append('g')
+		.attr('transform', 'translate(' + width/2 + ', ' + height/2 + ')');
+
+	g.selectAll('path').data(pie(data))
+		.enter().append('path')
+		.style('stroke', 'white')
+		.attr('d', arc)
+		.style('fill', function(d, i) { return color(i); });
+	</script>
+
+	<script>
+	var myApp=angular.module('myApp', []);
+	myApp.directive('helloWorld', function() {
+
+		return {
+			restrict: 'E',
+			link: function(scope, element, attr) {
+				element.text('hello world')
+			}
+
+		};
+	});
+	</script>
+</body>
+</html>

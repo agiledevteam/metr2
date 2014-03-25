@@ -1,0 +1,30 @@
+<html>
+<head>
+	<title></title>
+	<script src="/static/js/d3.min.js"></script>
+	<style>
+		body {
+			margin: 0px;
+		}
+		path {
+			stroke: white;
+		}
+	</style>
+</head>
+<body>
+
+<script>
+
+	var vis = d3.select('body').append('svg').append('g').attr('transform', 'translate(100,100)');
+
+	var color = d3.scale.category10();
+	var data = [4,5,6];
+
+	var arcs = vis.selectAll('path').data(d3.layout.pie()(data))
+		.enter().append('path')
+		.attr('d', d3.svg.arc().innerRadius(0).outerRadius(100))
+		.style('fill', function(d,i){return color(i);})
+
+</script>
+</body>
+</html>
