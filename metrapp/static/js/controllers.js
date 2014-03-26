@@ -33,19 +33,22 @@ app.controller('ProjectListCtrl', ['$scope', 'ProjectList', function($scope, Pro
   }
 }]);
 
-app.controller('UserProfileController', ['$scope', function($scope){
-  $scope.user = {
-    profile: [
-      {
-        project: "auction house",
-        delta_sloc: 100,
-        delta_floc: 20
-      },
-      {
-        project: "plyj",
-        delta_sloc: 10,
-        delta_floc: -2
-      }
-    ]
+app.controller('UserContributionController', ['$scope', '$http', function($scope, $http){
+  $scope.lessLimit = 7;
+  $scope.limit = $scope.lessLimit;
+  $scope.showMoreToggle = function() {
+    if ($scope.limit > $scope.lessLimit) {
+      $scope.limit = $scope.lessLimit;
+    } else {
+      $scope.limit = $scope.users.length
+    } 
+  };
+  $scope.select = function(user) {
+    $scope.selectedUser = user;
   }
+  $http.get('/api/contribution?project_id=' + $scope.projectId).success(function(data){
+    $scope.users = data.sort(function(a, b){
+      return d3.descending(a.no_commits, b.no_commits);
+    });
+  });
 }]);

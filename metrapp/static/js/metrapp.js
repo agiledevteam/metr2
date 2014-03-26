@@ -105,7 +105,7 @@ angular.module('metrapp', [
 
 .controller('UserCtrl', function($scope, $routeParams, $http) {
   initPagination($scope);
-  $http.get('api/user/' + $routeParams.userId).success(function(data) {
+  $http.get('api/user2?author=' + $routeParams.userId).success(function(data) {
     $scope.user = data['user'];
     $scope.commits = data['commits']
   });

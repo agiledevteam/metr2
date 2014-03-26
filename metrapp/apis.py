@@ -66,12 +66,35 @@ def api_users():
   map_project_ids_to_projects(users)
   return jsonify(users=users)
 
+@app.route('/api/contribution')
+def api_contribution():
+  project_id = request.args.get('project_id', '')
+  return json.dumps(query("""select 
+      author, 
+      count(*) as no_commits, 
+      sum(delta_sloc) as delta_sloc, 
+      sum(delta_floc) as delta_floc
+        from commits
+        where project_id = ?
+        group by author""", (project_id,)))
+
 @app.route('/api/user/<author>')
 def api_user(author):
   user = get_user(author)
   commits = get_commits_by_author(author)
   map_project_ids_to_projects([user])
   return jsonify(user=user, commits=commits)
+
+@app.route('/api/user2')
+def api_user2():
+  author = request.args.get('author', '')
+  profile = get_user_profile(author)
+  mapper = project_name_mapper()
+  commits = get_commits_by_author(author)
+  for each in profile:
+    each['project_name'] = mapper(each['project_id'])
+  return jsonify(user=dict(author=author, profile=profile), commits=commits)
+
 
 @app.route('/api/trend')
 def api_trend():

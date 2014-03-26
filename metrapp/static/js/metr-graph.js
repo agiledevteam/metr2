@@ -1,5 +1,5 @@
-angular.module('metrGraph',[]).
-directive('trend', function(){
+var metrGraph = angular.module('metrGraph',[])
+metrGraph.directive('trend', function(){
 	return {
 		restrict: 'E',
 		scope: {
@@ -140,5 +140,64 @@ directive('trend', function(){
 				  	.attr("r", 2);
 			};
 		}
+	};
+});
+
+metrGraph.directive('pieChart', function() {
+	function link(scope, element, attr) {
+		var data = scope.data;
+		var width = 250;
+		var height = 250;
+		var margin = 50;
+		var svg = d3.select(element[0]).append('svg').style({width:width, height:height});
+		
+		var min = Math.min(width, height);
+
+		var pie = d3.layout.pie();
+		pie.value(function(d){
+			return scope.getValue({d:d});
+		});
+		pie.sort(null);
+		var arc = d3.svg.arc()
+			.innerRadius(0)
+			.outerRadius((min-margin) / 2);
+		
+		var g = svg.append('g').attr('transform', 'translate(' + width/2 + ', ' + height/2 + ')');
+		var arcs = g.selectAll('path');
+
+		scope.$watch('data', update, true);
+
+		function update() {
+			data = scope.data;
+			if (!data) {return;}
+
+			arcs = arcs.data(pie(data));
+			arcs.exit().remove();
+			arcs.enter().append('path')
+			.style('fill', 'lightsteelblue')
+			.style('stroke', 'white');
+			//.style('opacity', function(d, i) { return Math.pow(0.8,i); });
+
+			arcs.attr('d', arc);
+			arcs.style('fill', function(d,i){
+				if (d.data === scope.selected) {
+					return 'steelblue';
+				} else {
+					return 'lightsteelblue';
+				}
+			});
+			
+		}
+
+		scope.$watch('selected', function(){
+			update();
+		});
+
+	}
+
+	return {
+		restrict: 'EA',
+		scope: {data: '=', selected: '=', getValue: '&'},
+		link: link
 	};
 });

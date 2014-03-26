@@ -2,18 +2,24 @@
 <h1 class="page-header">{{user.author}}</h1>
 <div class="row">
   <div class="col-md-8">
-    <ul class="list-group">
-      <li class="list-group-item">#Commits: {{user.no_commits}}</li>
-      <li class="list-group-item">Projects:
-        <span ng-repeat="project in user.projects | orderBy:'name'">
-          <a href="#/project/{{project.id}}" class="label label-default" >{{project.name}}</a>
-        </span>
-      </li>
-      <li class="list-group-item">&Sigma;&Delta;SLOC: {{user.sum_delta_sloc}}</li>
-      <li class="list-group-item">&Sigma;&Delta;FLOC: {{user.sum_delta_floc}}</li>
-    </ul>
+    <div class="table-responsive">
+      <table class="table table-condensed">
+        <tr>
+          <th>Project</th>
+          <th>#Commits</th>
+          <th>&Sigma;&Delta;SLOC</th>
+          <th>&Sigma;&Delta;FLOC</th>
+        </tr>
+        <tr ng-repeat="each in user.profile | orderBy: 'project_name'">
+          <td><a href="#/project/{{each.project_id}}" class="label label-default">{{each.project_name}}</a></td>
+          <td>{{each.no_commits|number}}</td>
+          <td>{{each.delta_sloc|number}}</td>
+          <td>{{each.delta_floc|number:2}}</td>
+        </tr>
+      </table>
+    </div>
   </div>
-  <div class="col-md-4" ng-controller="UserProfileController">
+  <div class="col-md-4">
     <user-profile data="user.profile"></user-profile>
   </div>
 </div>

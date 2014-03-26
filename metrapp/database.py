@@ -40,6 +40,27 @@ def get_user(author):
         [author])
   return make_dict(cur, cur.fetchone())
 
+def get_user_profile(author):
+  cur = get_db().execute("""select 
+      project_id,
+      count() as no_commits,
+      sum(delta_sloc) as delta_sloc, 
+      sum(delta_floc) as delta_floc
+        from commits 
+        where author = ?
+        group by project_id""",
+        [author])
+  return [make_dict(cur, row) for row in  cur.fetchall()]
+
+def project_name_mapper():
+  projects = get_projects()
+  all_projects = dict()
+  for project in projects:
+    all_projects[project['id']] = project
+  def f(project_id):
+    return all_projects[project_id]['name']
+  return f
+  
 def map_project_ids_to_projects(users):
   projects = get_projects()
   all_projects = dict()
@@ -138,8 +159,8 @@ def make_dict(cursor, row):
   return dict((cursor.description[idx][0], value) 
       for idx, value in enumerate(row))
 
-def query(q):
-  cur = get_db().execute(q)
+def query(q, params = []):
+  cur = get_db().execute(q, params)
   return [make_dict(cur, row) for row in cur.fetchall()]
 
 def safe(val, default_value):
