@@ -28,15 +28,17 @@ def api_projects():
 
 @app.route('/api/projects2')
 def api_projects2():
-  result = query('''
-    select p.id, p.name, x.sloc, x.floc, x.codefat, x.timestamp
-    from projects p, 
-         (select project_id as id, sloc, floc, codefat, max(timestamp) as timestamp
-          from commits 
-          where sloc > 0 group by project_id) x 
-    where p.id = x.id
-    order by p.name''')
-  return json.dumps(result)
+  commits = query('''
+    select c.project_id, c.sloc, c.floc, c.timestamp, c.codefat
+    from (select project_id, max(timestamp) as timestamp
+          from commits
+          where sloc > 0
+          group by project_id) x, commits c
+    where x.project_id = c.project_id
+          and x.timestamp = c.timestamp
+    ''')
+  map_project_name(commits)
+  return json.dumps(commits)
 
 def prec(f, n):
   return int(f*n)/float(n)
@@ -88,13 +90,15 @@ def api_user(author):
 @app.route('/api/user2')
 def api_user2():
   author = request.args.get('author', '')
-  profile = get_user_profile(author)
-  mapper = project_name_mapper()
   commits = get_commits_by_author(author)
-  for each in profile:
-    each['project_name'] = mapper(each['project_id'])
+  profile = get_user_profile(author)
+  map_project_name(profile)
   return jsonify(user=dict(author=author, profile=profile), commits=commits)
 
+def map_project_name(arr):
+  mapper = project_name_mapper()
+  for each in arr:
+    each['project_name'] = mapper(each['project_id'])
 
 @app.route('/api/trend')
 def api_trend():

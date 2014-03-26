@@ -8,10 +8,13 @@ CREATE TABLE daily (
 );
 
 INSERT INTO daily (project_id, timestamp, sloc, floc) 
-	SELECT project_id, max(timestamp), sloc, floc 
-	FROM commits
-	WHERE sloc > 0 
-	GROUP BY project_id, DATE(timestamp, 'unixepoch');
+	SELECT c.project_id, c.timestamp, c.sloc, c.floc
+	FROM (SELECT project_id, max(timestamp) as max_timestamp
+		  FROM commits
+	      WHERE sloc > 0 
+	      GROUP BY project_id, DATE(timestamp, 'unixepoch')) x, commits c
+	WHERE x.project_id = c.project_id AND
+	      x.max_timestamp = c.timestamp;
 
 CREATE TRIGGER insert_daily AFTER INSERT ON commits
 WHEN new.sloc > 0
