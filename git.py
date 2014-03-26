@@ -330,13 +330,18 @@ def insert_commit(db, project_id, commit):
 
 def parse_commit_(obj):
   lines = obj.splitlines()
-  index = lines.index('')
-  message = '\n'.join(lines[index+1:])
+
+  try:
+    index = lines.index('')
+    message = '\n'.join(lines[index+1:])
+    lines = lines[:index]
+  except ValueError:
+    message = ''
 
   author = 'unknown'
   timestamp = 0
   parents = []
-  for line in lines[:index]:
+  for line in lines:
     values = line.split()
     if len(values) == 0: # such as mergetag object can contain " " line
       continue
