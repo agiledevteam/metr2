@@ -24,18 +24,20 @@
           <thead>
             <tr>
               <th>Email</th>
-              <th align="right">#Commits</th>
-              <th align="right">&Sigma;&Delta;SLOC</th>
-              <th align="right">&Sigma;&Delta;FLOC</th>
+              <th class="number-column">#Commits</th>
+              <th class="number-column">&Sigma;&Delta;SLOC</th>
+              <th class="number-column">&Sigma;&Delta;FLOC</th>
             </tr>
           </thead>
           <tbody>
             <tr ng-repeat="user in users | orderBy: 'no_commits' : true | limitTo: limit "
                 ng-mouseenter="select(user)">
               <td><a href="#/user/{{user.author}}">{{user.author}}</a></td>
-              <td align="right">{{user.no_commits | number}}</td>
-              <td align="right">{{user.delta_sloc | number}}</td>
-              <td align="right">{{user.delta_floc | number:2}}</td>
+              <td class="number-column">{{user.no_commits | number}}
+                <span inline-pie data="[user.no_commits,commits.length]"></span>
+              </td>
+              <td class="number-column">{{user.delta_sloc | number}}</td>
+              <td class="number-column">{{user.delta_floc | number:2}}</td>
             </tr>
           </tbody>
           <tfoot ng-show="users.length > lessLimit">
@@ -49,7 +51,6 @@
             </tr>
           </tfoot>
         </table>
-        
       </div>
     </div>
     <div class="col-md-4" align="center">

@@ -189,3 +189,8 @@ td.data-cell {
 .data-text {
   font-size: xx-small;
 }
+
+th.number-column, td.number-column {
+  text-align: right;
+  padding-right: 10px;
+}

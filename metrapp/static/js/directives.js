@@ -53,3 +53,14 @@ app.directive('userProfile', function(){
 		link: link
 	};
 });
+
+app.directive('inlinePie', function() {
+	function link(scope, element, attr) {
+		$(element[0]).text(scope.data.join("/")).peity("pie").change()
+	}
+	return {
+		restrict: 'A',
+		scope: {data: '='},
+		link: link,
+	};
+});
