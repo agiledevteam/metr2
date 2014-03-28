@@ -1,19 +1,32 @@
-<h1 class="page-header">{{project.name}}</h1>
+<h1 class="page-header">{{project.name}}
+  <small>
+    <form ng-show="project.name" role="form" class="form-inline" style="display:inline-block;float:right">
+      <label>branch: 
+        <select class="form-control" ng-model="project.branch">
+          <option ng-repeat="branch in project.branches | orderBy: 'name'" ng-selected="branch.name == project.branch" value="{{branch.name}}">
+            {{branch.name}}
+          </option>
+        </select>
+      </label> 
+    </form>
+  </small>
+</h1>
   <div class="container-fluid">
     <div class="row">
-      <div class="col-md-4">
+      <div class="col-md-4" ng-show="summary">
         <ul class="list-group">
-          <li class="list-group-item">Code Fat: <span style="font-size: 5em;">{{summary.codefat_i}}<small>.{{summary.codefat_f}}%</small></span> </li>
-          <li class="list-group-item">Total SLOC: {{summary.total_sloc}} </li>
-          <li class="list-group-item">Total FLOC: {{summary.total_floc}} </li>
+          <li class="list-group-item">Code Fat: 
+            <span style="font-size: 5em;">{{summary.codefat|number:2}}%
+          </li>
+          <li class="list-group-item">SLOC: {{summary.sloc}} </li>
         </ul>
       </div>
       <div class="col-md-8" id="chart_div">
-        <trend data="data" since="since"></trend>
+        <trend date-data="data" since="since"></trend>
       </div>
     </div>
   </div>
-<h2 class="sub-header">Users</h2>
+  <h2 class="sub-header">Users</h2>
   <p>
     Following table and pie charts shows each developers overall contribution to <strong>{{project.name}}</strong> project. However, this contribution data may have some noise factors such as reverts, imports, feature drops which are hard to say as contribution. To explore the contribution data in more interactive manner, visit <strong>Explore</strong>(coming soon)!
   </p>

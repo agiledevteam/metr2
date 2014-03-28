@@ -97,8 +97,3 @@ Android 4.2.2 release 1""")
 
 Android 4.2.2 release 1""" == message
 
-
-
-
-
-

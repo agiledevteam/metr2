@@ -34,3 +34,11 @@
 .y2.point {
 	fill: orange;
 }
+
+.trend {
+	display: block;
+	border-radius: 6px;
+	background-color: #f3f3f3;
+	font: 10px sans-serif;
+}
+	

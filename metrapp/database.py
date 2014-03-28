@@ -21,11 +21,11 @@ def teardown_request(exception):
     db.close()
 
 def get_projects():
-  cur = get_db().execute('select id, name from projects order by name')
+  cur = get_db().execute('select id, name, branch from projects order by name')
   return [make_dict(cur, row) for row in cur.fetchall()]
 
 def get_project(project_id):
-  cur = get_db().execute('select id, name from projects where id = ?', (project_id,))
+  cur = get_db().execute('select id, name, branch from projects where id = ?', (project_id,))
   return make_dict(cur, cur.fetchone())
 
 def get_user(author):
@@ -82,15 +82,10 @@ def get_users():
   return [make_dict(cur, row) for row in cur.fetchall()]
 
 def get_commits_by_project(project_id):
-  cur = get_db().execute("""select
-      c.sha1,
-      c.author,
-      p.name as project_name, 
-      p.id as project_id,
-      c.sloc, c.delta_sloc, c.floc, c.delta_floc, c.codefat, c.delta_codefat, 
-      c.timestamp, c.parents, c.message
-          from projects p,commits c
-          where c.project_id = p.id and c.project_id = ? order by c.timestamp desc""",
+  cur = get_db().execute("""
+          select *
+          from commits
+          where project_id = ? order by timestamp desc""",
           [project_id])
   return [make_commit(cur, row) for row in cur.fetchall()]
 
@@ -165,6 +160,3 @@ def query(q, params = []):
 
 def safe(val, default_value):
   return val if val != None else default_value
-
-
-    

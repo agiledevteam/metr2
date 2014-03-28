@@ -55,18 +55,30 @@ angular.module('metrapp', [
   $scope.projectId = $routeParams.projectId;
   $scope.data = [];
   $scope.since = new Date(new Date().getFullYear()-1, 0, 1);
-  $http.get('/api/daily?project_id=' + $scope.projectId).success(function(data){
-    $scope.data = data.map(function(d){
-      d.date = new Date(d.date);
-      return d;
-    });
-  });
   $http.get('api/project/' + $scope.projectId).success(function(data) {
     $scope.project = data['project'];
-    $scope.summary = data['summary'];
-    $scope.commits = data['commits'];
   });
-
+  $scope.$watch("project.branch", function(newBranch) {
+    if (!newBranch)
+      return;
+    var queryParams = 'project_id=' + $scope.projectId + '&branch=' + newBranch;
+    $http.get('api/commits?' + queryParams).success(function(commits) {
+      $scope.commits = commits;
+      if (commits.length > 0) {
+        $scope.summary = commits[0];
+        $scope.data = commits
+          .filter(function(c){return c.sloc>0;})
+          .map(function(c){return {
+            date: new Date(c.timestamp*1000),
+            codefat: c.codefat,
+            sloc: c.sloc
+          };})
+          .sort(function(a,b){return d3.ascending(a.date, b.date);});
+      } else {
+        $scope.summary = {};
+      }
+    });
+  });
 }])
 
 .controller('CommitCtrl', function($scope, $routeParams, $http) {

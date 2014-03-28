@@ -45,9 +45,31 @@ def prec(f, n):
 
 @app.route('/api/project/<int:project_id>')
 def api_project(project_id):
-  project = Project.get(project_id)
+  project = get_project(project_id)
+  project['branches'] = git.get_branches(project['name'])
+  return jsonify(project=project)
+
+def get_mapper(value_list, key_prop):
+  key_map = dict()
+  for each in value_list:
+    key_map[each[key_prop]] = each
+  def mapper(key):
+    return key_map.get(key)
+  return mapper
+
+def get_commits_project_branch(project_id, branch):
+  if project_id == '' or branch == '':
+    return []
+  project = get_project(project_id)
+  revlist = git.rev_list(project["name"], "origin/" + branch)
   commits = get_commits_by_project(project_id)
-  return jsonify(project=project.as_dict(), commits=commits, summary=summary([project]))
+  return filter(None, map(get_mapper(commits, "sha1"), revlist))
+
+@app.route('/api/commits')
+def api_commits():
+  project_id = request.args.get('project_id', '')
+  branch = request.args.get('branch', '')
+  return json.dumps(get_commits_project_branch(project_id, branch))
 
 @app.route('/api/commit/<int:project_id>/', defaults=dict(sha1='HEAD'))
 @app.route('/api/commit/<int:project_id>/<sha1>')
@@ -143,7 +165,6 @@ def api_daily():
     codefat = 100*floc/sloc if sloc!=0 else 0
     result.append(dict(date=date,sloc=sloc,codefat=codefat))
   return json.dumps(result)
-
 
 def metr_day_project(by_when, project_id):
   "return (sloc, floc)"

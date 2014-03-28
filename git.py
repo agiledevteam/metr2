@@ -16,6 +16,15 @@ Entry = namedtuple('Entry', ['sha1', 'filename'])
 
 Diff = namedtuple('Diff', ['new', 'old', 'status'])
 
+class GitCmd(object):
+  def __init__(self, gitdir, worktree):
+    self.gitdir = gitdir
+    self.worktree = worktree
+    self.base_cmd = ["git","--git-dir=" + gitdir,"--work-tree=" + worktree]
+  def cmd(self, *args):
+    output = check_output(self.base_cmd + list(args))
+    return output.splitlines()
+
 class Git(object):
   def __init__(self, repository, gitdir, worktree, branch):
     self.repository = repository
@@ -102,8 +111,8 @@ def load_git(db, project_id):
     parts = repo.split("//")
     repo = parts[0] + "//" + config.SSH_USERNAME + "@" + parts[1]
 
-  gitdir = path.join(app.config['GITDIR'], name, '.git')
-  worktree = path.join(app.config['GITDIR'], name)
+  gitdir = get_gitdir(name)
+  worktree = get_worktree(name)
   return Git(repo, gitdir, worktree, branch)
 
 def update(db, project_id):
@@ -114,7 +123,7 @@ def update(db, project_id):
 def metr_repository(git, db, project_id):
   cur = db.execute('select sha1 from commits where project_id = ?', (project_id,))
   commits_in_db = set(row[0] for row in cur.fetchall())
-  commits_in_git = set(git.rev_list('HEAD'))
+  commits_in_git = set(git.rev_list('--remotes')) # get all commits from all branches
 
   for commitid in commits_in_git - commits_in_db:
     commit = metr_commit(commitid, git)
@@ -293,16 +302,26 @@ def diff(db, project_id, sha1, old, new):
       return file_diffs
   raise KeyError()
 
+def get_gitdir(project_name):
+  return path.join(app.config['GITDIR'], project_name, '.git')
+
+def get_worktree(project_name):
+  return path.join(app.config['GITDIR'], project_name)
+
 def get_repository(db, project_id):
   cur = db.execute('select name from projects where id=?', (project_id,))
   project_name, = cur.fetchone()
-  return Repository(path.join(app.config['GITDIR'], project_name, '.git'))
+  return Repository(get_gitdir(project_name))
 
 def codefat(stat):
   if stat.sloc == 0:
     return 0
   else:
     return 100 * stat.floc/stat.sloc
+
+def rev_list(project_name, branch):
+  cmd = GitCmd(get_gitdir(project_name), get_worktree(project_name))
+  return cmd.cmd("rev-list", branch)
 
 def rev_list_first_parent(db, project_id):
   git = load_git(db, project_id)
@@ -321,12 +340,26 @@ def is_java(filename):
   name, ext = path.splitext(filename) 
   return test_pattern.search(filename) == None and ext == ".java"
    
-   
 def insert_commit(db, project_id, commit):
   db.execute('insert into commits (project_id, author, timestamp, message, parents, sha1, sloc, floc, codefat) values (?,?,?,?,?,?,?,?,?)', 
         [project_id, commit.author, commit.timestamp, commit.message, commit.parents, commit.sha1, commit.sloc, commit.floc, commit.codefat])
   db.commit()
 
+def parse_branchline(line):
+  origin_prefix = "origin/"
+  branch = line.strip()
+  if branch.startswith(origin_prefix) and branch.find("->") == -1:
+    return dict(name=branch[len(origin_prefix):])
+  return None
+
+def get_branches(project_name):
+  branches = []
+  cmd = GitCmd(get_gitdir(project_name), get_worktree(project_name))
+  for line in cmd.cmd("branch", "-r"):
+    branch = parse_branchline(line)
+    if branch:
+      branches.append(branch)
+  return branches
 
 def parse_commit_(obj):
   lines = obj.splitlines()
