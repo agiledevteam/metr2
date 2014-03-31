@@ -8,3 +8,4 @@ Bootstrap(app)
 
 import metrapp.views
 import metrapp.apis
+import metrapp.tasks
