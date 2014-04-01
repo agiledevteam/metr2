@@ -58,6 +58,18 @@ angular.module('metrapp', [
   $http.get('api/project/' + $scope.projectId).success(function(data) {
     $scope.project = data['project'];
   });
+  $scope.lessLimit = 7;
+  $scope.limit = $scope.lessLimit;
+  $scope.showMoreToggle = function() {
+    if ($scope.limit > $scope.lessLimit) {
+      $scope.limit = $scope.lessLimit;
+    } else {
+      $scope.limit = $scope.users.length
+    } 
+  };
+  $scope.select = function(user) {
+    $scope.selectedUser = user;
+  }
   $scope.$watch("project.branch", function(newBranch) {
     if (!newBranch)
       return;
