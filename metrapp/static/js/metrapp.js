@@ -74,8 +74,21 @@ angular.module('metrapp', [
             sloc: c.sloc
           };})
           .sort(function(a,b){return d3.ascending(a.date, b.date);});
+        $scope.users = d3.nest()
+          .key(function(d){return d.author;})
+          .entries(commits)
+          .map(function(group){
+            return {
+                author: group.key,
+                no_commits: group.values.length,
+                delta_sloc: d3.sum(group.values, function(d){return d.delta_sloc;}),
+                delta_floc: d3.sum(group.values, function(d){return d.delta_floc;})
+            }; 
+          });
       } else {
+        $scope.data = [];
         $scope.summary = {};
+        $scope.users = [];
       }
     });
   });

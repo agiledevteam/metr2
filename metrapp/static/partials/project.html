@@ -13,22 +13,29 @@
 </h1>
   <div class="container-fluid">
     <div class="row">
-      <div class="col-md-4" ng-show="summary">
-        <ul class="list-group">
-          <li class="list-group-item">Code Fat: 
-            <span style="font-size: 5em;">{{summary.codefat|number:2}}%
-          </li>
-          <li class="list-group-item">SLOC: {{summary.sloc}} </li>
-        </ul>
+      <div class="table-responsive col-md-4" ng-show="summary">
+        <table class="table table-condensed">
+          <tbody>
+            <tr>
+              <td>Code Fat</td>
+              <td><span style="font-size: 3em;">{{summary.codefat|number:2}}%</span></td>
+            </tr>
+            <tr>
+              <td>SLOC</td>
+              <td><span style="font-size: 2em;">{{summary.sloc|number}}</span></td>
+            </tr>
+          </tbody>
+        </table>
       </div>
       <div class="col-md-8" id="chart_div">
         <trend trend-data="data" since="since"></trend>
+        <p style="text-align:right"><small>Since: {{since.toLocaleDateString()}}</small></p>
       </div>
     </div>
   </div>
-  <h2 class="sub-header">Users</h2>
+  <h2 class="sub-header">Authors</h2>
   <p>
-    Following table and pie charts shows each developers overall contribution to <strong>{{project.name}}</strong> project. However, this contribution data may have some noise factors such as reverts, imports, feature drops which are hard to say as contribution. To explore the contribution data in more interactive manner, visit <strong>Explore</strong>(coming soon)!
+    Following table and pie charts shows each developers overall contribution to <strong>{{project.name}}</strong> project's <strong>{{project.branch}}</strong> branch. However, this contribution data may have some noise factors such as reverts, imports, feature drops which are hard to say as contribution. To explore the contribution data in more interactive manner, visit <strong>Explore</strong>(coming soon)!
   </p>
   <div class="row" ng-controller="UserContributionController">
     <div class="col-md-8">
@@ -36,7 +43,7 @@
         <table class="table table-condensed">
           <thead>
             <tr>
-              <th>Email</th>
+              <th>Author</th>
               <th class="number-column">#Commits</th>
               <th class="number-column">&Sigma;&Delta;SLOC</th>
               <th class="number-column">&Sigma;&Delta;FLOC</th>

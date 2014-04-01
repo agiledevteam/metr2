@@ -56,11 +56,17 @@ app.directive('userProfile', function(){
 
 app.directive('inlinePie', function() {
 	function link(scope, element, attr) {
-		//$(element[0]).text(scope.data.join("/")).peity("pie").change()
+		scope.$watchCollection(attr.data, function(data) {
+			for (var v in data) {
+				if (!data[v]) {
+					return;
+				}
+			}
+			$(element[0]).text(data.join("/")).peity("pie").change()
+		});
 	}
 	return {
 		restrict: 'A',
-		scope: {data: '='},
 		link: link,
 	};
 });

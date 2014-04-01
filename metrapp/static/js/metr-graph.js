@@ -154,9 +154,10 @@ metrGraph.directive('pieChart', function() {
 		var g = svg.append('g').attr('transform', 'translate(' + width/2 + ', ' + height/2 + ')');
 		var arcs = g.selectAll('path');
 
-		scope.$watch('data', update, true);
+		scope.$watchCollection('data', update);
 
 		function update() {
+			console.log("update", scope.data);
 			data = scope.data;
 			if (!data) {return;}
 
