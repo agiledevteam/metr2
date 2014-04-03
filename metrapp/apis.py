@@ -12,6 +12,7 @@ from database import *
 from collections import OrderedDict
 from itertools import izip
 from rediscache import rediscache
+from collections import namedtuple
 
 redis = Redis()
 API_PROJECTS_KEY = 'api:projects'
@@ -30,6 +31,10 @@ def api_projects():
 
 @app.route('/api/projects2')
 def api_projects2():
+  return api_projects2_()
+
+@rediscache("api:projects2", 60*60)
+def api_projects2_():
   commits = query('''
     select c.project_id, c.sloc, c.floc, c.timestamp, c.codefat
     from (select project_id, max(timestamp) as timestamp
@@ -67,7 +72,7 @@ def get_commits_project_branch(project_id, branch):
   commits = get_commits_by_project(project_id)
   return filter(None, map(get_mapper(commits, "sha1"), revlist))
 
-@rediscache(API_REVLIST_KEY)
+@rediscache(API_REVLIST_KEY, 60*60)
 def get_rev_list(project_name, branch):
   return git.rev_list(project_name, "origin/" + branch)
 
@@ -92,6 +97,10 @@ def api_diff(project_id, sha1, old, new):
 
 @app.route('/api/users')
 def api_users():
+  return api_users_()
+
+@rediscache("api:users", 60*60)
+def api_users_():
   users = get_users()
   map_project_ids_to_projects(users)
   return jsonify(users=users)
@@ -138,40 +147,81 @@ def api_trend():
   stats = [metr_day_projects(day, project_ids) for day in range(90)]
   return jsonify(result=stats)
 
+TimedStat = namedtuple("TimedStat", ["sloc", "floc", "timestamp"])
+
+def tuple_sum(a, b):
+  return TimedStat(a.sloc+b.sloc, a.floc+b.floc, 0)
+
+start = 0
+tag = ""
+
+def benchmark_begin(t):
+  global start
+  global tag
+  tag = t
+  start = datetime.now()
+  print tag, start
+def benchmark(t):
+  global start
+  global tag
+  now = datetime.now()
+  print t, now-start
+  start = now
+
 @app.route('/api/daily')
 def api_daily():
-  project_id = request.args.get('project_id', '')
+  return api_daily_()
 
-  def tuple_sum(a, b):
-    return (a[0]+b[0], a[1]+b[1])
-  def where_clause():
-    if project_id == '':
-      return ''
-    else:
-      return ' where project_id = ?'
-  def where_params():
-    if project_id == '':
-      return []
-    else:
-      return [project_id]
-  
-
+@rediscache("api:daily", 60*60)
+def api_daily_():
+  benchmark_begin("daily")
+  projects = get_projects()
+  benchmark("get_projects")
+  commits = query("select sha1, sloc, floc, timestamp from commits where sloc > 0")
+  benchmark("get_commits")
+  mapper = get_mapper(commits, "sha1")
+  benchmark("get_mapper")
   matrix = dict()
-  for pid, date, sloc, floc in get_db().execute('''select 
-    project_id as pid, date(timestamp, 'unixepoch') as date, sloc, floc
-    from daily''' + where_clause(), where_params()):
-    if date in matrix:
-      matrix[date][pid] = (sloc, floc)
-    else:
-      matrix[date] = {pid:(sloc,floc)}
+  for project in projects:
+    project_id = project["id"]
+    for sha1 in get_rev_list(project["name"], project["branch"]):
+      commit = mapper(sha1)
+      if commit is None:
+        continue
+      d = str(date.fromtimestamp(commit["timestamp"]))
+      if d in matrix:
+        day = matrix[d]
+        if not project_id in day or day[project_id].timestamp < commit["timestamp"]:
+          day[project_id] = TimedStat(commit["sloc"], commit["floc"], commit["timestamp"])
+      else:
+        matrix[d] = {project_id:TimedStat(commit["sloc"], commit["floc"], commit["timestamp"])}
+  benchmark("matrix")
   projects = dict()
   result = []
-  for date in sorted(matrix.iterkeys()):
-    projects.update(matrix[date])
-    sloc,floc = reduce(tuple_sum, projects.itervalues())
+  for d in sorted(matrix.iterkeys()):
+    projects.update(matrix[d])
+    sloc,floc,timestamp = reduce(tuple_sum, projects.itervalues())
     codefat = 100*floc/sloc if sloc!=0 else 0
-    result.append(dict(date=date,sloc=sloc,codefat=codefat))
+    result.append(dict(date=d,sloc=sloc,codefat=codefat))
+  benchmark("daily")
   return json.dumps(result)
+
+  # matrix = dict()
+  # for pid, date, sloc, floc in get_db().execute('''select 
+  #   project_id as pid, date(timestamp, 'unixepoch') as date, sloc, floc
+  #   from daily''' + where_clause(), where_params()):
+  #   if date in matrix:
+  #     matrix[date][pid] = (sloc, floc)
+  #   else:
+  #     matrix[date] = {pid:(sloc,floc)}
+  # projects = dict()
+  # result = []
+  # for date in sorted(matrix.iterkeys()):
+  #   projects.update(matrix[date])
+  #   sloc,floc = reduce(tuple_sum, projects.itervalues())
+  #   codefat = 100*floc/sloc if sloc!=0 else 0
+  #   result.append(dict(date=date,sloc=sloc,codefat=codefat))
+  # return json.dumps(result)
 
 def metr_day_project(by_when, project_id):
   "return (sloc, floc)"

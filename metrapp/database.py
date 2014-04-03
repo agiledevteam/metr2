@@ -21,7 +21,7 @@ def teardown_request(exception):
     db.close()
 
 def get_projects():
-  cur = get_db().execute('select id, name, branch from projects order by name')
+  cur = get_db().execute('select id, name, repository, branch from projects order by name')
   return [make_dict(cur, row) for row in cur.fetchall()]
 
 def get_project(project_id):
@@ -65,10 +65,11 @@ def map_project_ids_to_projects(users):
   projects = get_projects()
   all_projects = dict()
   for project in projects:
-    all_projects[project['id']] = project
+    all_projects[project['id']] = dict(id=project['id'], name=project['name'])
   for user in users:
     project_ids = user['project_ids']
     user['projects'] = [all_projects[int(project_id)] for project_id in set(project_ids.split())]
+    del user['project_ids']
 
 def get_users():
   cur = get_db().execute("""select 
@@ -80,6 +81,12 @@ def get_users():
         from commits 
         group by author""")
   return [make_dict(cur, row) for row in cur.fetchall()]
+
+def get_commits():
+  cur = get_db().execute("""
+          select *
+          from commits""")
+  return [make_commit(cur, row) for row in cur.fetchall()]
 
 def get_commits_by_project(project_id):
   cur = get_db().execute("""
