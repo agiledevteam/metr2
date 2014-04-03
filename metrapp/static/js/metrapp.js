@@ -1,4 +1,10 @@
 
+Date.prototype.addMonths = function(m) {
+  var result = new Date(this);
+  result.setMonth(this.getMonth() + m);
+  return result;
+};
+
 angular.module('metrapp', [
   'metrGraph', 
   'metrServices', 
@@ -41,7 +47,25 @@ angular.module('metrapp', [
  
 .controller('OverviewCtrl', ['$scope', '$http', function($scope, $http) {
   $scope.data = [];
-  $scope.since = new Date(new Date().getFullYear(), 0, 1);
+  $scope.durations = [{
+    title: 'this year',
+    since: new Date(new Date().getFullYear(), 0, 1)
+  }, {
+    title: '12 months',
+    since: new Date().addMonths(-12)
+  }, {
+    title: '6 months',
+    since: new Date().addMonths(-6)
+  }, {
+    title: '3 months',
+    since: new Date().addMonths(-3)
+  }, {
+    title: 'all'
+  }];
+  $scope.since = $scope.durations[0].since;
+  $scope.setSince = function(since) {
+    $scope.since = since;
+  };
   $http.get('/api/daily').success(function(data){
     $scope.data = data.map(function(d){
       d.date = new Date(d.date);

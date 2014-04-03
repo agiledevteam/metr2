@@ -1,16 +1,11 @@
 var metrGraph = angular.module('metrGraph',[])
 metrGraph.directive('trend', function($window){
 	function link(scope, element, attr) {
-		var margin = {left:50,right:50,top:10,bottom:30};
+		var margin = {left:50,right:60,top:10,bottom:30};
 		element.addClass('trend');
 
-		var clientWidth = element[0].clientWidth;
-		var clientHeight = clientWidth/3;
-		var width = clientWidth - margin.left - margin.right;
-		var height = clientHeight - margin.top - margin.bottom;
-
 		var chart = d3.select(element[0])
-				.style({width: "100%", height: clientHeight+"px"})		
+				.style({width: "100%"})		
 			.append('svg')
 				.style({width: "100%",height: "100%"})
 			.append("g")
@@ -33,16 +28,27 @@ metrGraph.directive('trend', function($window){
 		scope.data = [];
 		//scope.since = new Date(new Date().getFullYear()-1, 0, 1);
 		function draw() {
+			var clientWidth = element[0].clientWidth;
+			var clientHeight = clientWidth/3;
+			var width = clientWidth - margin.left - margin.right;
+			var height = clientHeight - margin.top - margin.bottom;
+
+			d3.select(element[0]).style({height: clientHeight+"px"});
+
 			chart.selectAll(".axis").remove();
 			chart.selectAll("path").remove();
 
 			var data = scope.data;
-
+			if (scope.since) {
+				data = data.filter(function(d){
+					return d.date > scope.since;
+				});
+			}
 			if (data.length == 0)
 				return;
 
 			var minDate = data[0].date;
-			var maxDate = data[data.length-1].date;
+			var maxDate = new Date();//data[data.length-1].date;
 
 			x.range([0, width])
 				.domain([minDate, maxDate]);
@@ -96,39 +102,25 @@ metrGraph.directive('trend', function($window){
 			//   	.attr("r", 2);
 		}
 
-		scope.$watchCollection(attr.trendData, function(data) {
-			scope.data = data;
-			if (scope.since) {
-				scope.data = scope.data.filter(function(d){
-					return d.date > scope.since;
-				});
-			}
+		scope.$watch('data', function() {
+			draw();
+		},true);
+		scope.$watch('since', function() {
 			draw();
 		});
-		scope.$watch("since", function(since) {
-			scope.since = since;
-			if (scope.since) {
-				data = scope.data.filter(function(d){
-					return d.date > scope.since;
-				});
-			}
+		scope.$watch(function(){
+			return element[0].clientWidth;
+		}, function() {
 			draw();
 		});
 		angular.element($window).bind('resize',function() {
-			clientWidth = element[0].clientWidth;
-			clientHeight = clientWidth / 3;
-
-			width = clientWidth - margin.left - margin.right;
-			height = clientHeight - margin.top - margin.bottom;
-
-			d3.select(element[0])
-				.style({height: clientHeight+"px"});
 			draw();
 		});
 	}
 	return {
 		restrict: 'E',
-		link: link
+		link: link,
+		scope: {'data': '=', 'since': '=' }
 	};
 });
 
@@ -147,7 +139,7 @@ metrGraph.directive('pieChart', function() {
 			return scope.getValue({d:d});
 		});
 		pie.sort(function(a,b){
-			return a.no_commits - b.no_commits;
+			return b.no_commits - a.no_commits;
 		});
 		var arc = d3.svg.arc()
 			.innerRadius(0)

@@ -11,9 +11,11 @@ from metrapp.views import summary
 from database import *
 from collections import OrderedDict
 from itertools import izip
+from rediscache import rediscache
 
 redis = Redis()
 API_PROJECTS_KEY = 'api:projects'
+API_REVLIST_KEY = 'api:revlist'
 
 @app.route('/api/projects')
 def api_projects():
@@ -61,9 +63,13 @@ def get_commits_project_branch(project_id, branch):
   if project_id == '' or branch == '':
     return []
   project = get_project(project_id)
-  revlist = git.rev_list(project["name"], "origin/" + branch)
+  revlist = get_rev_list(project["name"], branch)
   commits = get_commits_by_project(project_id)
   return filter(None, map(get_mapper(commits, "sha1"), revlist))
+
+@rediscache(API_REVLIST_KEY)
+def get_rev_list(project_name, branch):
+  return git.rev_list(project_name, "origin/" + branch)
 
 @app.route('/api/commits')
 def api_commits():
@@ -149,6 +155,7 @@ def api_daily():
     else:
       return [project_id]
   
+
   matrix = dict()
   for pid, date, sloc, floc in get_db().execute('''select 
     project_id as pid, date(timestamp, 'unixepoch') as date, sloc, floc
