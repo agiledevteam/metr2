@@ -146,7 +146,9 @@ metrGraph.directive('pieChart', function() {
 		pie.value(function(d){
 			return scope.getValue({d:d});
 		});
-		pie.sort(null);
+		pie.sort(function(a,b){
+			return a.no_commits - b.no_commits;
+		});
 		var arc = d3.svg.arc()
 			.innerRadius(0)
 			.outerRadius((min-margin) / 2);
