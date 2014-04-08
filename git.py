@@ -123,11 +123,12 @@ def update(db, project_id):
 def metr_repository(git, db, project_id):
   cur = db.execute('select sha1 from commits where project_id = ?', (project_id,))
   commits_in_db = set(row[0] for row in cur.fetchall())
-  commits_in_git = set(git.rev_list('--remotes')) # get all commits from all branches
+  commits_in_git = git.rev_list('--remotes') # get all commits from all branches
 
-  for commitid in commits_in_git - commits_in_db:
-    commit = metr_commit(commitid, git)
-    insert_commit(db, project_id, commit)
+  for commitid in commits_in_git:
+    if not commitid in commits_in_db: 
+      commit = metr_commit(commitid, git)
+      insert_commit(db, project_id, commit)
 
 def metr_commit(commitid, git):
   """
