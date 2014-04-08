@@ -66,6 +66,12 @@ After configuring you need to initialize database by executing following:
 
     $ python metrdb.py
 
+# Front-end dependencies
+
+    $ npm install
+    $ bower install  # gets front-end dependencies
+    $ grunt bower    # copies dependencies to 'static' folder
+
 # run Metr
 
 You can run Metr using embedded web server.
@@ -80,6 +86,8 @@ For now, there is no web interface to add a git repository. Use plain sqlite3 CL
 
     $ sqlite3 metr.db
     > insert into projects (name, repository, branch) values ('MyProject', 'git://...', 'master');
+
+To add multiple repositories, use `python scan_repo.py` after cloning repositories in GIT_DIR. This command will add newly cloned repositories into database.
 
 # update metr
 

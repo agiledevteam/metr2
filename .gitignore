@@ -8,3 +8,4 @@ config.py
 *.db-journal
 metr
 node_modules
+metrapp/static/libs

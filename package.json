@@ -1,0 +1,30 @@
+{
+  "name": "metr2",
+  "version": "0.0.0",
+  "description": "Metr is a web app for monitoring codefat of git repositories. Codefat is a experimental code metric which indicates how code looks bad.",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "bower": "~1.2.8"
+  },
+  "devDependencies": {
+    "grunt": "~0.4.4",
+    "grunt-contrib-uglify": "~0.4.0",
+    "grunt-bower": "~0.9.2"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/agiledevteam/metr2"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/agiledevteam/metr2/issues"
+  },
+  "homepage": "https://github.com/agiledevteam/metr2"
+}
