@@ -3,7 +3,6 @@
   "version": "0.0.1",
   "dependencies": {
     "angular": "latest",
-    "angular-strap": "~2.0.0",
-    "angular-route": "~1.2.16"
+    "angular-strap": "~2.0.0"
   }
 }

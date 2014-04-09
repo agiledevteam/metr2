@@ -8,42 +8,9 @@ Date.prototype.addMonths = function(m) {
 angular.module('metrapp', [
   'metrGraph',
   'metrServices',
-  'ngRoute',
   'ngSanitize',
   'ui.bootstrap',
   'ui.bootstrap.pagination'])
-
-
-// .config(function($routeProvider) {
-//   $routeProvider
-//     .when('/', {
-//       controller:'OverviewCtrl',
-//       templateUrl:'static/partials/projects.html'
-//     })
-//     .when('/project/:projectId', {
-//       controller:'ProjectCtrl',
-//       templateUrl:'static/partials/project.html'
-//     })
-//     .when('/commit/:projectId/:commitId', {
-//       controller:'CommitCtrl',
-//       templateUrl:'static/partials/commit.html'
-//     })
-//     .when('/users/', {
-//       controller:'UsersCtrl',
-//       templateUrl:'static/partials/users.html'
-//     })
-//     .when('/user/:userId', {
-//       controller:'UserCtrl',
-//       templateUrl:'static/partials/user.html'
-//     })
-//     .when('/diff', {
-//       controller:'DiffCtrl',
-//       templateUrl:'static/partials/diff.html'
-//     })
-//     .otherwise({
-//       redirectTo:'/'
-//     });
-// })
 
 .controller('MainCtrl', ['$scope', '$location', function($scope, $location) {
   $scope.$watch(function(){
@@ -159,7 +126,14 @@ angular.module('metrapp', [
   };
 }])
 
-.controller('DiffCtrl', ['$scope', '$location', '$http', function($scope, $location, $http) {
+.controller('DiffCtrl', ['$scope', '$location', '$http', 
+    function($scope, $location, $http) {
+  var search = $location.search();
+  $scope.projectId = search.projectId;
+  $scope.commitId = search.commitId;
+  $scope.parentFileId = search.parentFileId;
+  $scope.fileId = search.fileId;
+
   var url = 'api/diff/'
     + $scope.projectId + '/'
     + $scope.commitId + '/'
@@ -180,18 +154,6 @@ angular.module('metrapp', [
 .controller('UserCtrl', ['$scope', '$http', '$location',
     function($scope, $http, $location) {
   $scope.userId = $location.path().split("/")[2];
-  $scope.subviews = ['overall', 'commits'];
-  if ($location.hash()) {
-    $scope.subview = $location.hash();
-  } else {
-    $scope.subview = $scope.subviews[0];
-  }
-  $scope.$watch('subview', function() {
-    $location.hash($scope.subview);
-  });
-  $scope.setSubview = function(view) {
-    $scope.subview = view;
-  }
   initPagination($scope);
   $http.get('api/user2?author=' + $scope.userId).success(function(data) {
     $scope.user = data['user'];
@@ -202,7 +164,10 @@ angular.module('metrapp', [
 .filter('shorten', function() {
   return function(title) {
     // if title starts with [..] tags
-    return title.replace(/^(\[.*\])(.*)/, '<small title="$1">[..]</small>$2');
+    if (title)
+      return title.replace(/^(\[.*\])(.*)/, '<small title="$1">[..]</small>$2');
+    else
+      return title;
   }
 })
 .filter('page', function() {

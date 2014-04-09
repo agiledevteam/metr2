@@ -12,7 +12,7 @@
     <link href="/static/css/dashboard.css" rel="stylesheet">
     <link href="/static/css/metr-graph.css" rel="stylesheet">
   </head>
-  <body>
+  <body ng-controller="MainCtrl">
     <nav class="navbar navbar-default" role="navigation">
       <div class="container-fluid">
         <!-- Brand and toggle get grouped for better mobile display -->
@@ -29,8 +29,10 @@
         <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
           <ul class="nav navbar-nav">
-            <li><a href="#/projects">Projects</a></li>
-            <li><a href="#/users">Users</a></li>
+            <li ng-class="{active:page === 'projects'}">
+              <a href="#/projects">Projects</a></li>
+            <li ng-class="{active:page === 'users'}">
+              <a href="#/users">Users</a></li>
           </ul>
           <ul class="nav navbar-nav navbar-right">
             <li><a href="#/admin">Admin</a></li>
@@ -39,7 +41,7 @@
       </div><!-- /.container-fluid -->
     </nav>
 
-    <div class="container-fluid" ng-controller="MainCtrl">
+    <div class="container-fluid" >
       <div class="main">
         <div ng-switch on="page">
           <div ng-switch-when="user">
@@ -51,6 +53,12 @@
           <div ng-switch-when="users">
             <div ng-include="'static/partials/users.html'" ng-controller="UsersCtrl"></div>
           </div>
+          <div ng-switch-when="commit">
+            <div ng-include="'static/partials/commit.html'" ng-controller="CommitCtrl"></div>
+          </div>
+          <div ng-switch-when="diff">
+            <div ng-include="'static/partials/diff.html'" ng-controller="DiffCtrl"></div>
+          </div>
           <div ng-switch-default>
             <div ng-include="'static/partials/projects.html'" ng-controller="OverviewCtrl"></div>
           </div>
@@ -60,7 +68,6 @@
 
     <script src="static/js/d3.min.js"></script>
     <script src="static/js/angular.min.js"></script>
-    <script src="static/js/angular-route.min.js"></script>
     <script src="static/js/angular-sanitize.min.js"></script>
     <script src="static/js/angular-resource.min.js"></script>
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
