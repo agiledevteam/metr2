@@ -5,7 +5,7 @@ metrGraph.directive('trend', function($window){
 		element.addClass('trend');
 
 		var chart = d3.select(element[0])
-				.style({width: "100%"})		
+				.style({width: "100%"})
 			.append('svg')
 				.style({width: "100%",height: "100%"})
 			.append("g")
@@ -25,7 +25,6 @@ metrGraph.directive('trend', function($window){
 		var y = d3.scale.linear();
 		var y2 = d3.scale.linear();
 
-		scope.data = [];
 		//scope.since = new Date(new Date().getFullYear()-1, 0, 1);
 		function draw() {
 			var clientWidth = element[0].clientWidth;
@@ -64,7 +63,7 @@ metrGraph.directive('trend', function($window){
 			line.x(function(d) { return x(d.date); })
 				.y(function(d) { return y(d.codefat); });
 			line2.x(function(d) { return x(d.date); })
-			    .y(function(d) { return y2(d.sloc); });	
+			    .y(function(d) { return y2(d.sloc); });
 
 			chart.append("g")
 				.attr("class", "x axis")
@@ -131,7 +130,7 @@ metrGraph.directive('pieChart', function() {
 		var height = 250;
 		var margin = 50;
 		var svg = d3.select(element[0]).append('svg').style({width:width, height:height});
-		
+
 		var min = Math.min(width, height);
 
 		var pie = d3.layout.pie();
@@ -144,7 +143,7 @@ metrGraph.directive('pieChart', function() {
 		var arc = d3.svg.arc()
 			.innerRadius(0)
 			.outerRadius((min-margin) / 2);
-		
+
 		var g = svg.append('g').attr('transform', 'translate(' + width/2 + ', ' + height/2 + ')');
 		var arcs = g.selectAll('path');
 
@@ -170,7 +169,7 @@ metrGraph.directive('pieChart', function() {
 					return 'lightsteelblue';
 				}
 			});
-			
+
 		}
 
 		scope.$watch('selected', function(){

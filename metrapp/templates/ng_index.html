@@ -25,7 +25,7 @@
           </button>
           <a class="navbar-brand" href="#">Metr</a>
         </div>
- 
+
         <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
           <ul class="nav navbar-nav">
@@ -39,8 +39,23 @@
       </div><!-- /.container-fluid -->
     </nav>
 
-    <div class="container-fluid">
-      <div class="main" ng-view></div>
+    <div class="container-fluid" ng-controller="MainCtrl">
+      <div class="main">
+        <div ng-switch on="page">
+          <div ng-switch-when="user">
+            <div ng-include="'static/partials/user.html'" ng-controller="UserCtrl"></div>
+          </div>
+          <div ng-switch-when="project">
+            <div ng-include="'static/partials/project.html'" ng-controller="ProjectCtrl"></div>
+          </div>
+          <div ng-switch-when="users">
+            <div ng-include="'static/partials/users.html'" ng-controller="UsersCtrl"></div>
+          </div>
+          <div ng-switch-default>
+            <div ng-include="'static/partials/projects.html'" ng-controller="OverviewCtrl"></div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <script src="static/js/d3.min.js"></script>

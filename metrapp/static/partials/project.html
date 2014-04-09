@@ -1,13 +1,13 @@
 <h1 class="page-header">{{project.name}}
   <small>
     <form ng-show="project.name" role="form" class="form-inline" style="display:inline-block;float:right">
-      <label>branch: 
+      <label>branch:
         <select class="form-control" ng-model="project.branch">
           <option ng-repeat="branch in project.branches | orderBy: 'name'" ng-selected="branch.name == project.branch" value="{{branch.name}}">
             {{branch.name}}
           </option>
         </select>
-      </label> 
+      </label>
     </form>
   </small>
 </h1>
@@ -28,8 +28,8 @@
         </table>
       </div>
       <div class="col-md-8" id="chart_div">
-        <trend data="data" since="since"></trend>
-        <p style="text-align:right"><small>Since: {{since.toLocaleDateString()}}</small></p>
+        <trend data="trend.data" since="trend.since"></trend>
+        <p style="text-align:right"><small>Since: {{trend.since.toLocaleDateString()}}</small></p>
       </div>
     </div>
   </div>
@@ -66,7 +66,7 @@
                 <a href="" ng-show="lessLimit == limit" ng-click="showMoreToggle()">
                   Show {{users.length}} users...</a>
                 <a href="" ng-show="lessLimit < limit" ng-click="showMoreToggle()">
-                  Collapse...</a>  
+                  Collapse...</a>
               </td>
             </tr>
           </tfoot>

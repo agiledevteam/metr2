@@ -72,7 +72,7 @@ def get_commits_project_branch(project_id, branch):
   commits = get_commits_by_project(project_id)
   return filter(None, map(get_mapper(commits, "sha1"), revlist))
 
-@rediscache(API_REVLIST_KEY, 60*60)
+#@rediscache(API_REVLIST_KEY, 60*60)
 def get_rev_list(project_name, branch):
   return git.rev_list(project_name, "origin/" + branch)
 
@@ -108,10 +108,10 @@ def api_users_():
 @app.route('/api/contribution')
 def api_contribution():
   project_id = request.args.get('project_id', '')
-  return json.dumps(query("""select 
-      author, 
-      count(*) as no_commits, 
-      sum(delta_sloc) as delta_sloc, 
+  return json.dumps(query("""select
+      author,
+      count(*) as no_commits,
+      sum(delta_sloc) as delta_sloc,
       sum(delta_floc) as delta_floc
         from commits
         where project_id = ?
@@ -207,7 +207,7 @@ def api_daily_():
   return json.dumps(result)
 
   # matrix = dict()
-  # for pid, date, sloc, floc in get_db().execute('''select 
+  # for pid, date, sloc, floc in get_db().execute('''select
   #   project_id as pid, date(timestamp, 'unixepoch') as date, sloc, floc
   #   from daily''' + where_clause(), where_params()):
   #   if date in matrix:
@@ -228,15 +228,15 @@ def metr_day_project(by_when, project_id):
   def update():
     cur = get_db().execute('select sloc, floc from commits where project_id = ? and timestamp < ? and sloc > 0 order by timestamp desc limit 1', [project_id, by_when])
     row = cur.fetchone()
-    if row != None and row[0] > 0: 
+    if row != None and row[0] > 0:
       return (row[0], row[1])
     else:
       return (0, 0)
 
-  key = "codefat:%d:%d" % (project_id, by_when) 
+  key = "codefat:%d:%d" % (project_id, by_when)
 
   if redis.exists(key):
-    return pickle.loads(redis.get(key))    
+    return pickle.loads(redis.get(key))
   else:
     result = update()
     redis.set(key, pickle.dumps(result))
@@ -246,7 +246,7 @@ def metr_day_projects(day, project_ids):
   "return (day, codefat, sloc)"
   by_day = date.today() + timedelta(days = 1 - day)
   by_when = time.mktime(by_day.timetuple())
-  
+
   sloc = 0
   floc = 0
   for project_id in project_ids:

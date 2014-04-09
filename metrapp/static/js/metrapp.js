@@ -6,45 +6,53 @@ Date.prototype.addMonths = function(m) {
 };
 
 angular.module('metrapp', [
-  'metrGraph', 
-  'metrServices', 
+  'metrGraph',
+  'metrServices',
   'ngRoute',
   'ngSanitize',
-  'ui.bootstrap', 
+  'ui.bootstrap',
   'ui.bootstrap.pagination'])
 
- 
-.config(function($routeProvider) {
-  $routeProvider
-    .when('/', {
-      controller:'OverviewCtrl',
-      templateUrl:'static/partials/projects.html'
-    })
-    .when('/project/:projectId', {
-      controller:'ProjectCtrl',
-      templateUrl:'static/partials/project.html'
-    })
-    .when('/commit/:projectId/:commitId', {
-      controller:'CommitCtrl',
-      templateUrl:'static/partials/commit.html'
-    })
-    .when('/users/', {
-      controller:'UsersCtrl',
-      templateUrl:'static/partials/users.html'
-    })
-    .when('/user/:userId', {
-      controller:'UserCtrl',
-      templateUrl:'static/partials/user.html'
-    })
-    .when('/diff', {
-      controller:'DiffCtrl',
-      templateUrl:'static/partials/diff.html'
-    })
-    .otherwise({
-      redirectTo:'/'
-    });
-})
- 
+
+// .config(function($routeProvider) {
+//   $routeProvider
+//     .when('/', {
+//       controller:'OverviewCtrl',
+//       templateUrl:'static/partials/projects.html'
+//     })
+//     .when('/project/:projectId', {
+//       controller:'ProjectCtrl',
+//       templateUrl:'static/partials/project.html'
+//     })
+//     .when('/commit/:projectId/:commitId', {
+//       controller:'CommitCtrl',
+//       templateUrl:'static/partials/commit.html'
+//     })
+//     .when('/users/', {
+//       controller:'UsersCtrl',
+//       templateUrl:'static/partials/users.html'
+//     })
+//     .when('/user/:userId', {
+//       controller:'UserCtrl',
+//       templateUrl:'static/partials/user.html'
+//     })
+//     .when('/diff', {
+//       controller:'DiffCtrl',
+//       templateUrl:'static/partials/diff.html'
+//     })
+//     .otherwise({
+//       redirectTo:'/'
+//     });
+// })
+
+.controller('MainCtrl', ['$scope', '$location', function($scope, $location) {
+  $scope.$watch(function(){
+    return $location.path();
+  }, function() {
+    $scope.page = $location.path().split("/")[1];
+  });
+}])
+
 .controller('OverviewCtrl', ['$scope', '$http', function($scope, $http) {
   $scope.data = [];
   $scope.durations = [{
@@ -73,12 +81,14 @@ angular.module('metrapp', [
     });
   });
 }])
- 
-.controller('ProjectCtrl', ['$scope', '$routeParams', '$http', function($scope, $routeParams, $http) {
+
+.controller('ProjectCtrl', ['$scope', '$location', '$http', function($scope, $location, $http) {
   initPagination($scope);
-  $scope.projectId = $routeParams.projectId;
-  $scope.data = [];
-  $scope.since = new Date(new Date().getFullYear()-1, 0, 1);
+  $scope.projectId = $location.path().split("/")[2];
+  $scope.trend = {
+    data: [],
+    since: new Date(new Date().getFullYear()-1, 0, 1)
+  };
   $http.get('api/project/' + $scope.projectId).success(function(data) {
     $scope.project = data['project'];
   });
@@ -89,7 +99,7 @@ angular.module('metrapp', [
       $scope.limit = $scope.lessLimit;
     } else {
       $scope.limit = $scope.users.length
-    } 
+    }
   };
   $scope.select = function(user) {
     $scope.selectedUser = user;
@@ -102,7 +112,7 @@ angular.module('metrapp', [
       $scope.commits = commits;
       if (commits.length > 0) {
         $scope.summary = commits[0];
-        $scope.data = commits
+        $scope.trend.data = commits
           .filter(function(c){return c.sloc>0;})
           .map(function(c){return {
             date: new Date(c.timestamp*1000),
@@ -119,10 +129,10 @@ angular.module('metrapp', [
                 no_commits: group.values.length,
                 delta_sloc: d3.sum(group.values, function(d){return d.delta_sloc;}),
                 delta_floc: d3.sum(group.values, function(d){return d.delta_floc;})
-            }; 
+            };
           });
       } else {
-        $scope.data = [];
+        $scope.trend.data = [];
         $scope.summary = {};
         $scope.users = [];
       }
@@ -130,8 +140,10 @@ angular.module('metrapp', [
   });
 }])
 
-.controller('CommitCtrl', function($scope, $routeParams, $http) {
-  $http.get('api/commit/' + $routeParams.projectId + '/' + $routeParams.commitId).success(function(data) {
+.controller('CommitCtrl', ['$scope', '$http', '$location', function($scope, $http, $location) {
+  $scope.projectId = $location.path().split("/")[2];
+  $scope.commitId = $location.path().split("/")[3];
+  $http.get('api/commit/' + $scope.projectId + '/' + $scope.commitId).success(function(data) {
     $scope.project = data['project'];
     $scope.commit = data['commit'];
     $scope.diffs = data['diffs'];
@@ -145,17 +157,18 @@ angular.module('metrapp', [
       'parentFileId': diff.old.sha1
     });
   };
-})
+}])
 
-.controller('DiffCtrl', function($scope, $routeParams, $http) {
-  var url = 'api/diff/' + $routeParams.projectId + '/'
-    + $routeParams.commitId + '/'
-    + $routeParams.parentFileId + '/'
-    + $routeParams.fileId;
+.controller('DiffCtrl', ['$scope', '$location', '$http', function($scope, $location, $http) {
+  var url = 'api/diff/'
+    + $scope.projectId + '/'
+    + $scope.commitId + '/'
+    + $scope.parentFileId + '/'
+    + $scope.fileId;
   $http.get(url).success(function(data) {
     $scope.lines = data['lines'];
   });
-})
+}])
 
 .controller('UsersCtrl', function($scope, $http) {
   initPagination($scope);
@@ -164,13 +177,27 @@ angular.module('metrapp', [
   });
 })
 
-.controller('UserCtrl', function($scope, $routeParams, $http) {
+.controller('UserCtrl', ['$scope', '$http', '$location',
+    function($scope, $http, $location) {
+  $scope.userId = $location.path().split("/")[2];
+  $scope.subviews = ['overall', 'commits'];
+  if ($location.hash()) {
+    $scope.subview = $location.hash();
+  } else {
+    $scope.subview = $scope.subviews[0];
+  }
+  $scope.$watch('subview', function() {
+    $location.hash($scope.subview);
+  });
+  $scope.setSubview = function(view) {
+    $scope.subview = view;
+  }
   initPagination($scope);
-  $http.get('api/user2?author=' + $routeParams.userId).success(function(data) {
+  $http.get('api/user2?author=' + $scope.userId).success(function(data) {
     $scope.user = data['user'];
     $scope.commits = data['commits']
   });
-})
+}])
 
 .filter('shorten', function() {
   return function(title) {
@@ -183,7 +210,7 @@ angular.module('metrapp', [
     if (array instanceof Array) {
       var start = (currentPage-1) * pageSize;
       var end = currentPage * pageSize
-      return array.slice(start, end);      
+      return array.slice(start, end);
     } else {
       return [];
     }

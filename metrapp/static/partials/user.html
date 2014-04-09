@@ -1,5 +1,11 @@
-
 <h1 class="page-header">{{user.author}}</h1>
+
+<ul class="nav nav-pills">
+  <li ng-repeat="each in subviews" ng-class="{active: subview === each}"><a ng-click="setSubview(each)">{{each}}</a></li>
+</ul>
+<div ng-switch on="subview">
+<div ng-switch-when="overall">
+<h2>Overall</h2>
 <div class="row">
   <div class="col-md-8">
     <div class="table-responsive">
@@ -23,10 +29,14 @@
     <user-profile data="user.profile"></user-profile>
   </div>
 </div>
-
-<h2 class="sub-header">{{commits.length}} Commit(s)</h2>
+</div>
+<div ng-switch-default>
+<h2 class="sub-header">Commits</h2>
 <div class="row">
-  <div class="col-md-4 col-md-offset-8">
+  <div class="col-md-8">
+    {{commits.length}} Commit(s)
+  </div>
+  <div class="col-md-4">
     <div class="input-group">
       <span class="input-group-addon"><span class="glyphicon glyphicon-filter"></span></span>
       <input type="search" class="form-control search-query" placeholder="Search commit..." ng-model="q" />
@@ -59,4 +69,6 @@
   </tbody>
   </table>
   <pagination class="pagination-sm" total-items="(commits|filter:q).length" items-per-page="pageSize" page="currentPage"></pagination>
+</div>
+</div>
 </div>
