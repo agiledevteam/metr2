@@ -15,9 +15,11 @@ angular.module('metrapp', [
 .controller('MainCtrl', ['$scope', '$location', function($scope, $location) {
   $scope.$watch(function(){
     return $location.path();
-  }, function() {
+  }, update);
+  update();
+  function update() {
     $scope.page = $location.path().split("/")[1];
-  });
+  }
 }])
 
 .controller('OverviewCtrl', ['$scope', '$http', function($scope, $http) {
@@ -51,16 +53,23 @@ angular.module('metrapp', [
 
 .controller('ProjectCtrl', ['$scope', '$location', '$http', function($scope, $location, $http) {
   initPagination($scope);
-  $scope.projectId = $location.path().split("/")[2];
-  $scope.trend = {
-    data: [],
-    since: new Date(new Date().getFullYear()-1, 0, 1)
-  };
-  $http.get('api/project/' + $scope.projectId).success(function(data) {
-    $scope.project = data['project'];
-  });
-  $scope.lessLimit = 7;
-  $scope.limit = $scope.lessLimit;
+
+  $scope.$watch(function(){
+    return $location.path();
+  }, update);
+  update();
+  function update() {
+    $scope.projectId = $location.path().split("/")[2];
+    $scope.trend = {
+      data: [],
+      since: new Date(new Date().getFullYear()-1, 0, 1)
+    };
+    $http.get('api/project/' + $scope.projectId).success(function(data) {
+      $scope.project = data['project'];
+    });
+    $scope.lessLimit = 7;
+    $scope.limit = $scope.lessLimit;
+  }
   $scope.showMoreToggle = function() {
     if ($scope.limit > $scope.lessLimit) {
       $scope.limit = $scope.lessLimit;
@@ -70,11 +79,9 @@ angular.module('metrapp', [
   };
   $scope.select = function(user) {
     $scope.selectedUser = user;
-  }
-  $scope.$watch("project.branch", function(newBranch) {
-    if (!newBranch)
-      return;
-    var queryParams = 'project_id=' + $scope.projectId + '&branch=' + newBranch;
+  };
+  $scope.$watch("project.id + project.branch", function() {
+    var queryParams = 'project_id=' + $scope.project.id + '&branch=' + $scope.project.branch;
     $http.get('api/commits?' + queryParams).success(function(commits) {
       $scope.commits = commits;
       if (commits.length > 0) {
@@ -111,10 +118,8 @@ angular.module('metrapp', [
   update();
   $scope.$watch(function () {
     return $location.path();
-  }, function() {
-    update();
-  });
-
+  }, update);
+  update();
   function update() {
     $scope.projectId = $location.path().split("/")[2];
     $scope.commitId = $location.path().split("/")[3];
@@ -139,20 +144,27 @@ angular.module('metrapp', [
 
 .controller('DiffCtrl', ['$scope', '$location', '$http',
     function($scope, $location, $http) {
-  var search = $location.search();
-  $scope.projectId = search.projectId;
-  $scope.commitId = search.commitId;
-  $scope.parentFileId = search.parentFileId;
-  $scope.fileId = search.fileId;
+  $scope.$watch(function(){
+    return $location.path();
+  }, udpate);
+  update();
+  function update() {
+    var search = $location.search();
+    $scope.projectId = search.projectId;
+    $scope.commitId = search.commitId;
+    $scope.parentFileId = search.parentFileId;
+    $scope.fileId = search.fileId;
 
-  var url = 'api/diff/'
-    + $scope.projectId + '/'
-    + $scope.commitId + '/'
-    + $scope.parentFileId + '/'
-    + $scope.fileId;
-  $http.get(url).success(function(data) {
-    $scope.lines = data['lines'];
-  });
+    var url = 'api/diff/'
+      + $scope.projectId + '/'
+      + $scope.commitId + '/'
+      + $scope.parentFileId + '/'
+      + $scope.fileId;
+    $http.get(url).success(function(data) {
+      $scope.lines = data['lines'];
+    });
+  }
+
 }])
 
 .controller('UsersCtrl', function($scope, $http) {
@@ -164,12 +176,18 @@ angular.module('metrapp', [
 
 .controller('UserCtrl', ['$scope', '$http', '$location',
     function($scope, $http, $location) {
-  $scope.userId = $location.path().split("/")[2];
   initPagination($scope);
-  $http.get('api/user2?author=' + $scope.userId).success(function(data) {
-    $scope.user = data['user'];
-    $scope.commits = data['commits']
-  });
+  $scope.$watch(function(){
+    return $location.path();
+  }, update);
+  update();
+  function update() {
+    $scope.userId = $location.path().split("/")[2];
+    $http.get('api/user2?author=' + $scope.userId).success(function(data) {
+      $scope.user = data['user'];
+      $scope.commits = data['commits']
+    });
+  }
 }])
 
 .filter('shorten', function() {
@@ -200,7 +218,6 @@ function initPagination($scope) {
   $scope.$watch('currentPage', function() {
     $scope.pageStart = 1 + ($scope.currentPage - 1) * $scope.pageSize;
   });
-
 }
 
 function buildUrl(url, parameters){

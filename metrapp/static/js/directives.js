@@ -3,6 +3,7 @@ var app = angular.module('metrapp');
 app.directive('userProfile', function(){
 	function link(scope, element, attr) {
 		function update() {
+			d3.select(element[0]).select('svg').remove();
 			var data = scope.data;
 			if (!data) {
 				return;
@@ -16,11 +17,11 @@ app.directive('userProfile', function(){
 				.style({width: width, height: height})
 				.append('g')
 				.attr('transform', 'translate(' + width/2 + ',' + height/2+ ')');
-			
+
 			var x_extent = d3.extent(data, function(d){return d.delta_sloc;});
 			var y_extent = d3.extent(data, function(d){return d.delta_floc;});
 			var max = d3.max(x_extent.concat(y_extent).map(Math.abs))
-			
+
 			var x = d3.scale.linear()
 				.domain([-max, max])
 				.range([-(width-margin)/2, (width-margin)/2]);
