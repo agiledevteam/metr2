@@ -1,5 +1,5 @@
 Metr is a web app for monitoring codefat of git repositories.
-Codefat is a experimental code metric which indicates how code looks bad. 
+Codefat is a experimental code metric which indicates how code looks bad.
 
 # virtualenv
 
@@ -34,9 +34,9 @@ python-dev
 
 libgit2
 
-* On Ubuntu, 
-* clone libgit2 and install it, then 
-* check `LD_LIBRARY_PATH` 
+* On Ubuntu,
+* clone libgit2 and install it, then
+* check `LD_LIBRARY_PATH`
 
 plyj
 
@@ -64,7 +64,7 @@ Configure DATABASE (sqlite3 database filepath), GITDIR (directory for git reposi
 
 After configuring you need to initialize database by executing following:
 
-    $ python metrdb.py
+    $ python migrate.py
 
 # Front-end dependencies
 

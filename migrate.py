@@ -1,8 +1,8 @@
 
 def init(db):
-	checks = [('select * from commits limit 1', 'schema.sql'),
-		('select delta_sloc from commits limit 1', 'migrate.sql'),
-		('select * from daily limit 1', 'migrate2.sql')]
+	checks = [('select * from commits limit 1', 'schemas/schema.sql'),
+		('select delta_sloc from commits limit 1', 'schemas/migrate.sql'),
+		('select * from daily limit 1', 'schemas/migrate2.sql')]
 	for sql, scriptfile in checks:
 		try:
 			db.execute(sql)
