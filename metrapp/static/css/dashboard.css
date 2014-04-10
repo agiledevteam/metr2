@@ -149,8 +149,8 @@ body {
 .nav, .pagination, .carousel, .panel-title a { cursor: pointer; }
 
 .truncate {
-  white-space: nowrap; 
-  overflow: hidden; 
+  white-space: nowrap;
+  overflow: hidden;
   text-overflow: ellipsis;
 }
 
@@ -163,7 +163,7 @@ th {
 }
 
 tbody>tr:hover {
-  background: #ddd; 
+  background: #ddd;
 }
 
 .bar {
@@ -199,4 +199,34 @@ th.number-column, td.number-column {
   border-width: 1px;
   border-color: #ddd;
   border-radius: 4px 4px 0 0;
+}
+
+.activity-legend {
+  font-size: 11px;
+  color: #777;
+  font-weight: bold;
+  float: right;
+}
+
+ul.legend {
+  display: inline-block;
+  list-style: none;
+  margin: 0 5px;
+  padding: 0px;
+}
+
+ul.legend li {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-left: 2px;
+}
+
+text.wday {
+  fill: #ccc;
+  font-size: 9px;
+}
+
+.calendar-graph {
+  text-align: center;
 }
