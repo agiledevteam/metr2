@@ -3,7 +3,7 @@ from datetime import datetime, date, timedelta
 import time
 # metr
 from metrapp import app
-from metrapp.views import Project, get_db
+from metrapp.views import get_db
 import git
 from database import *
 from collections import OrderedDict
