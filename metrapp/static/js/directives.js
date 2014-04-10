@@ -76,17 +76,45 @@ app.directive('calendarGraph', function() {
 	function link(scope, element, attr) {
 		var x = 11;
 		var y = 11;
-		var days = 365;
+
 		var dx = 2;
 		var dy = 2;
 
-		var day = new Date();
-		day.setDate(day.getDate() - days - 1);
-		day.setDate(day.getDate() - day.getDay());
+	  var colorRange = ['#eee', '#d6e685', '#8cc665', '#44a340', '#1e6823'];
+		var timestamp = scope.timestamp;
 
-		var weeks = d3.range(Math.floor((days + 1) / 7));
-		console.log(weeks);
-		var days = d3.range(7);
+		var seconds = 60 * 60 * 24;
+		var milliseconds = 1000 * seconds;
+		var days = d3.range(366).map(function(){return 0;});
+		var firstDay = new Date();
+		firstDay.setDate(firstDay.getDate() - days.length);
+		firstDay = new Date(firstDay.toLocaleDateString());
+
+		var offset = firstDay.getDay();
+
+		scope.$watchCollection("data", update);
+		function update() {
+			days = days.map(function(){return 0;});
+			scope.data.forEach(function(each){
+				var time = new Date(timestamp(each) * 1000);
+				if (time > firstDay) {
+					var day = Math.floor((time.getTime() - firstDay.getTime()) / milliseconds);
+					days[day] += 1;
+				}
+			});
+
+			var color = d3.scale.linear()
+				.domain([0, 1, 3, 5, d3.max(days)])
+				.range(colorRange);
+
+			var cells = calendar
+				.selectAll('rect')
+				.data(days);
+			cells.transition()
+					.style('fill', function(d){
+						return color(d);
+					});
+		}
 
 		var calendar = d3.select(element[0])
 				.attr('class', 'calendar-graph')
@@ -112,18 +140,18 @@ app.directive('calendarGraph', function() {
 			,{title:'T', style:{display:'none'}}
 			,{title:'F', style:{}}
 			,{title:'S', style:{display:'none'}}];
-		calendar
-			.selectAll('g')
-			.data(weeks).enter().append('g')
-				.attr('transform', function(d, i) {
-					return 'translate(' + (i*(x + dx))+ ')';
-				}).selectAll('rect')
-					.data(days).enter().append('rect')
-						.style('fill', '#eee')
-						.attr({width: x, height: y})
-						.attr("y", function(d,i){
-							return i*(y + dy);
-						});
+
+		calendar.selectAll('rect')
+			.data(days)
+			.enter().append('rect')
+			.attr({width: x, height: y})
+			.attr("x", function(d, i){
+				return Math.floor((offset + i) / 7) * (x + dx);
+			})
+			.attr("y", function(d, i){
+				return ((offset + i) % 7) * (y + dy);
+			})
+			.style('fill', colorRange[0]);
 		calendar.selectAll('text.wday')
 			.data(dayOfWeekLabel).enter().append('text').attr('class', 'wday')
 			.text(function(d){ return d.title;})
@@ -133,16 +161,9 @@ app.directive('calendarGraph', function() {
 			.attr('text-anchor', 'middle')
 			.attr('dx', -10)
 			.attr('dy', function(d,i){ return 9 + (y+dy)*i;});
-
-		var week = 0;
-		for (var i=0; i<366; i++) {
-
-			day.setDate(day.getDate() + 1);
-			if (day.getDay() == 6)
-				week++;
-		}
 	}
 	return {
 		link: link,
+		scope: {data: '=', timestamp: '&'}
 	};
 });
