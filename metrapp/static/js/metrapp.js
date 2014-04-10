@@ -108,13 +108,24 @@ angular.module('metrapp', [
 }])
 
 .controller('CommitCtrl', ['$scope', '$http', '$location', function($scope, $http, $location) {
-  $scope.projectId = $location.path().split("/")[2];
-  $scope.commitId = $location.path().split("/")[3];
-  $http.get('api/commit/' + $scope.projectId + '/' + $scope.commitId).success(function(data) {
-    $scope.project = data['project'];
-    $scope.commit = data['commit'];
-    $scope.diffs = data['diffs'];
+  update();
+  $scope.$watch(function () {
+    return $location.path();
+  }, function() {
+    update();
   });
+
+  function update() {
+    $scope.projectId = $location.path().split("/")[2];
+    $scope.commitId = $location.path().split("/")[3];
+
+    $http.get('api/commit/' + $scope.projectId + '/' + $scope.commitId).success(function(data) {
+      $scope.project = data['project'];
+      $scope.commit = data['commit'];
+      $scope.diffs = data['diffs'];
+    });
+  }
+
   $scope.url_for = function(diff) {
     return buildUrl('#/diff', {
       'projectId': $scope.project.id,
@@ -126,7 +137,7 @@ angular.module('metrapp', [
   };
 }])
 
-.controller('DiffCtrl', ['$scope', '$location', '$http', 
+.controller('DiffCtrl', ['$scope', '$location', '$http',
     function($scope, $location, $http) {
   var search = $location.search();
   $scope.projectId = search.projectId;
