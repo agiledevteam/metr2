@@ -3,6 +3,7 @@ from flask import send_file
 from datetime import datetime, date, timedelta
 import git
 from database import *
+import tasks
 
 @app.route('/')
 def ng_root():
@@ -15,9 +16,7 @@ def update(project_id):
 
 @app.route('/updateall')
 def update_repositories():
-  for project in get_projects():
-    print(project['name'])
-    git.update(get_db(), project['id'])
+  tasks.update_all.queue();
   return "ok"
 
 @app.route('/delete/<int:project_id>')

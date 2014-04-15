@@ -1,6 +1,6 @@
 from metrapp import app, database
 from collections import namedtuple
-from subprocess import call, check_output
+from subprocess import call, check_output, STDOUT
 from os import path
 import random
 import re
@@ -35,10 +35,13 @@ class Git(object):
 
   def update(self):
     if self.cloned():
-      self.fetch()
-      self.merge()
+      if self.fetch():
+        self.merge()
+        return True
+      return False
     else:
       self.clone()
+      return True
 
   def cloned(self):
     return path.exists(self.gitdir)
@@ -48,11 +51,13 @@ class Git(object):
     return output.splitlines()
 
   def fetch(self):
-    call(self.base_cmd + ['fetch', '--all', '-n'])
-  
+    "return true if some are fetched"
+    output = check_output(self.base_cmd + ['fetch', '-n'], stderr=STDOUT)
+    return output != ""
+
   def merge(self):
     call(self.base_cmd + ['merge', 'origin/' + self.branch])
-  
+
   def clone(self):
     call(['git', 'clone', self.repository, '-b', self.branch, self.worktree])
 
@@ -82,22 +87,22 @@ class Git(object):
       if is_java(filename):
         result.append(Entry(sha1, filename))
     return result
-  
+
   def parse_blob(self, sha1):
     src = check_output(self.base_cmd + ['cat-file', 'blob', sha1], universal_newlines=True)
     return src
 
   def diff_tree(self, sha1):
     output = check_output(self.base_cmd + ['diff-tree', '-r', '--root', '-m', '--no-renames', '--no-commit-id', sha1])
-    diff = [] 
+    diff = []
     for line in output.splitlines():
       values = line.split()
-      oldsha1, newsha1, status, oldfilename = values[2], values[3], values[4], values[5] 
+      oldsha1, newsha1, status, oldfilename = values[2], values[3], values[4], values[5]
       if len(values) == 7:
         newfilename = values[6]
       else:
-        newfilename = oldfilename 
-      if is_java(newfilename): 
+        newfilename = oldfilename
+      if is_java(newfilename):
         diff.append(Diff(status=status[0], new=dict(filename=newfilename, sha1=newsha1), old=dict(filename=oldfilename, sha1=oldsha1)))
     return diff
 
@@ -106,10 +111,11 @@ def load_git(db, project_id):
   r = cur.fetchone()
   name, repo, branch = r[1], r[2], r[3]
 
-  # insert ssh_username 
+  # insert ssh_username
   if config.SSH_USERNAME != None and config.SSH_USERNAME != "":
     parts = repo.split("//")
-    repo = parts[0] + "//" + config.SSH_USERNAME + "@" + parts[1]
+    if len(parts) >= 2:
+      repo = parts[0] + "//" + config.SSH_USERNAME + "@" + parts[1]
 
   gitdir = get_gitdir(name)
   worktree = get_worktree(name)
@@ -117,8 +123,8 @@ def load_git(db, project_id):
 
 def update(db, project_id):
   git = load_git(db, project_id)
-  git.update()
-  metr_repository(git, db, project_id)
+  if git.update():
+    metr_repository(git, db, project_id)
 
 def metr_repository(git, db, project_id):
   cur = db.execute('select sha1 from commits where project_id = ?', (project_id,))
@@ -126,7 +132,7 @@ def metr_repository(git, db, project_id):
   commits_in_git = git.rev_list('--remotes') # get all commits from all branches
 
   for commitid in commits_in_git:
-    if not commitid in commits_in_db: 
+    if not commitid in commits_in_db:
       commit = metr_commit(commitid, git)
       insert_commit(db, project_id, commit)
 
@@ -165,9 +171,9 @@ def metr_blob(git, sha1):
     cache[sha1] = stat_
     return stat_
 
-# todo change this into MRU cache 
+# todo change this into MRU cache
 cache = dict()
-  
+
 
 def delete(db, project_id):
   cur = db.execute('select id, name, repository, branch from projects where id = ?',[project_id])
@@ -336,13 +342,13 @@ def decode(s):
       return s.decode('euc-kr')
     except:
       return s.decode('utf-8', errors='ignore')
- 
+
 def is_java(filename):
-  name, ext = path.splitext(filename) 
+  name, ext = path.splitext(filename)
   return test_pattern.search(filename) == None and ext == ".java"
-   
+
 def insert_commit(db, project_id, commit):
-  db.execute('insert into commits (project_id, author, timestamp, message, parents, sha1, sloc, floc, codefat) values (?,?,?,?,?,?,?,?,?)', 
+  db.execute('insert into commits (project_id, author, timestamp, message, parents, sha1, sloc, floc, codefat) values (?,?,?,?,?,?,?,?,?)',
         [project_id, commit.author, commit.timestamp, commit.message, commit.parents, commit.sha1, commit.sloc, commit.floc, commit.codefat])
   db.commit()
 

@@ -9,3 +9,4 @@ config.py
 metr
 node_modules
 metrapp/static/libs
+*.log
