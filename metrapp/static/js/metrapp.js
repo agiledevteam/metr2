@@ -146,7 +146,7 @@ angular.module('metrapp', [
     function($scope, $location, $http) {
   $scope.$watch(function(){
     return $location.path();
-  }, udpate);
+  }, update);
   update();
   function update() {
     var search = $location.search();
