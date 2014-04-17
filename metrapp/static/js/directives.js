@@ -88,7 +88,7 @@ app.directive('calendarGraph', function() {
 		var days = d3.range(366).map(function(){return 0;});
 		var firstDay = new Date();
 		firstDay.setDate(firstDay.getDate() - days.length);
-		firstDay = new Date(firstDay.toLocaleDateString());
+		firstDay = new Date(firstDay.toDateString());
 
 		var offset = firstDay.getDay();
 
