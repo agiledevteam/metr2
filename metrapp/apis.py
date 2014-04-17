@@ -15,10 +15,16 @@ from collections import namedtuple
 def api_projects2():
   return api_projects2_()
 
-@rediscache("api:projects2", 60*60)
+def remove_duplicates(arr, key):
+  result = dict()
+  for each in arr:
+    result[each[key]] = each  # overwrite
+  return result.values()
+
+#@rediscache("api:projects2", 60*60)
 def api_projects2_():
   commits = query('''
-    select c.project_id, c.sloc, c.floc, c.timestamp, c.codefat
+    select c.project_id, c.sloc, c.floc, c.timestamp, c.codefat, c.id
     from (select project_id, max(timestamp) as timestamp
           from commits
           where sloc > 0
@@ -26,6 +32,7 @@ def api_projects2_():
     where x.project_id = c.project_id
           and x.timestamp = c.timestamp
     ''')
+  commits = remove_duplicates(commits, 'project_id')
   map_project_name(commits)
   return json.dumps(commits)
 
@@ -144,7 +151,7 @@ def benchmark(t):
 def api_daily():
   return api_daily_()
 
-@rediscache("api:daily", 60*60)
+#@rediscache("api:daily", 60*60)
 def api_daily_():
   benchmark_begin("daily")
   projects = get_projects()

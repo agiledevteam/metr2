@@ -1,6 +1,7 @@
 from metrapp import app, database
 from collections import namedtuple
-from subprocess import call, check_output, STDOUT
+from subprocess import call, STDOUT
+import subprocess
 from os import path
 import random
 import re
@@ -15,6 +16,13 @@ Commit = namedtuple('Commit', ['sha1', 'author', 'timestamp', 'message', 'parent
 Entry = namedtuple('Entry', ['sha1', 'filename'])
 
 Diff = namedtuple('Diff', ['new', 'old', 'status'])
+
+def check_output(*args, **kwargs):
+  try:
+    return subprocess.check_output(*args, **kwargs)
+  except:
+    print "error", args, kwargs
+    return ""
 
 class GitCmd(object):
   def __init__(self, gitdir, worktree):
