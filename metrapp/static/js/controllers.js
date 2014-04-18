@@ -26,9 +26,9 @@ app.controller('ProjectListCtrl', ['$scope', 'ProjectList', function($scope, Pro
   });
   $scope.sortBy = function(key) {
     if ($scope.orderKey === key) {
-      $scope.reverseSort = !$scope.reverseSort;  
+      $scope.reverseSort = !$scope.reverseSort;
     } else {
-      $scope.orderKey = key;  
+      $scope.orderKey = key;
     }
   }
 }]);
@@ -41,7 +41,7 @@ app.controller('UserContributionController', ['$scope', '$http', function($scope
       $scope.limit = $scope.lessLimit;
     } else {
       $scope.limit = $scope.users.length
-    } 
+    }
   };
   $scope.select = function(user) {
     $scope.selectedUser = user;

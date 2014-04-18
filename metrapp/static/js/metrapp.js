@@ -128,6 +128,7 @@ angular.module('metrapp', [
       $scope.project = data['project'];
       $scope.commit = data['commit'];
       $scope.diffs = data['diffs'];
+      $scope.filelist = data['filelist'];
     });
   }
 

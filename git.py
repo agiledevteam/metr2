@@ -8,6 +8,10 @@ import re
 import config
 from metr import metr, stat_sum, Stat
 from pygit2 import Repository
+from redis import Redis
+import pickle
+
+redis = Redis()
 
 test_pattern = re.compile('tests?/', re.IGNORECASE)
 
@@ -139,25 +143,25 @@ def metr_repository(git, db, project_id):
   commits_in_db = set(row[0] for row in cur.fetchall())
   commits_in_git = git.rev_list('--remotes') # get all commits from all branches
 
-  for commitid in commits_in_git:
-    if not commitid in commits_in_db:
-      commit = metr_commit(commitid, git)
+  for commit_id in commits_in_git:
+    if not commit_id in commits_in_db:
+      commit = metr_commit(git, project_id, commit_id)
       insert_commit(db, project_id, commit)
 
-def metr_commit(commitid, git):
+def metr_commit(git, project_id, commit_id):
   """
   Returns commit , recover parse/metr failure
   """
-  author, timestamp, message, parents = git.parse_commit(commitid)
-  print commitid[:7],
-  entries = git.ls_tree(commitid)
+  author, timestamp, message, parents = git.parse_commit(commit_id)
+  print commit_id[:7],
+  entries = git.ls_tree(commit_id)
   print len(entries),'file(s) ...',
   stat = Stat(sloc=0, floc=0)
 
   stats = []
   for entry in entries:
     try:
-      stat0 = metr_blob(git, entry.sha1)
+      stat0 = metr_blob(git, project_id, entry.sha1)
       stats.append(stat0)
     except KeyboardInterrupt:
       raise
@@ -167,21 +171,20 @@ def metr_commit(commitid, git):
   else:
     print "done"
     stat = stat_sum(stats)
-  return Commit(commitid, author, timestamp, message, parents, stat.sloc, stat.floc, codefat(stat))
+  return Commit(commit_id, author, timestamp, message, parents, stat.sloc, stat.floc, codefat(stat))
 
-def metr_blob(git, sha1):
+def metr_blob(git, project_id, sha1):
   "May raise exception"
-  if sha1 in cache:
-    return cache[sha1]
-  else:
+  assert len(sha1) == 40
+  key = 'codefat:' + str(project_id)
+  stat = redis.hget(key, sha1)
+  if stat is None:
     blob = git.parse_blob(sha1)
-    stat_ = metr(blob)
-    cache[sha1] = stat_
-    return stat_
-
-# todo change this into MRU cache
-cache = dict()
-
+    stat = metr(blob)
+    redis.hset(key, sha1, pickle.dumps(stat))
+    return stat
+  else:
+    return pickle.loads(stat)
 
 def delete(db, project_id):
   cur = db.execute('select id, name, repository, branch from projects where id = ?',[project_id])
@@ -199,7 +202,7 @@ def diff_tree(db, project_id, sha1):
   git = load_git(db, project_id)
   def metr_file(file):
     try:
-      stat = metr_blob(git, file['sha1'])
+      stat = metr_blob(git, project_id, file['sha1'])
     except KeyboardInterrupt:
       raise
     except:
@@ -398,3 +401,14 @@ def parse_commit_(obj):
     elif values[0] == 'parent':
       parents += [values[1]]
   return decode(author), timestamp, decode(message), " ".join(parents)
+
+def get_stats(git, project_id, arr):
+  "return [Stat(sloc,floc)] for each sha1 in arr"
+  return [metr_blob(git, project_id, sha1) for sha1 in arr]
+
+def ls_tree(db, project_id, commit_id):
+  git = load_git(db, project_id)
+  files = git.ls_tree(commit_id)
+  stats = get_stats(git, project_id, [each[0] for each in files])
+  return [dict(sha1=sha1,name=name,sloc=stat.sloc,floc=stat.floc,codefat=codefat(stat))
+            for (sha1, name), stat in zip(files, stats)]

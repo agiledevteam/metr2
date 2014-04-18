@@ -71,13 +71,21 @@ def api_commits():
   branch = request.args.get('branch', '')
   return json.dumps(get_commits_project_branch(project_id, branch))
 
-@app.route('/api/commit/<int:project_id>/', defaults=dict(sha1='HEAD'))
-@app.route('/api/commit/<int:project_id>/<sha1>')
-def api_commit(project_id, sha1):
+@app.route('/api/commit/<int:project_id>/', defaults=dict(commit_id='HEAD'))
+@app.route('/api/commit/<int:project_id>/<commit_id>')
+def api_commit(project_id, commit_id):
   project = get_project(project_id)
-  commit = get_commit(project_id, sha1)
-  diffs = git.diff_tree(get_db(), project_id, sha1)
-  return jsonify(commit=commit,project=project,diffs=diffs)
+  commit = get_commit(project_id, commit_id)
+  filelist = git.ls_tree(get_db(), project_id, commit_id)
+  diffs = git.diff_tree(get_db(), project_id, commit_id)
+
+  status_map = dict()
+  for diff in diffs:
+    status_map[diff['new']['filename']] = diff['status']
+  for file in filelist:
+    file['status'] = status_map.get(file['name'], '')
+
+  return jsonify(commit=commit,project=project,diffs=diffs,filelist=filelist)
 
 @app.route('/api/diff/<int:project_id>/<sha1>/<old>/<new>')
 def api_diff(project_id, sha1, old, new):
@@ -131,35 +139,15 @@ TimedStat = namedtuple("TimedStat", ["sloc", "floc", "timestamp"])
 def tuple_sum(a, b):
   return TimedStat(a.sloc+b.sloc, a.floc+b.floc, 0)
 
-start = 0
-tag = ""
-
-def benchmark_begin(t):
-  global start
-  global tag
-  tag = t
-  start = datetime.now()
-  print tag, start
-def benchmark(t):
-  global start
-  global tag
-  now = datetime.now()
-  print t, now-start
-  start = now
-
 @app.route('/api/daily')
 def api_daily():
   return api_daily_()
 
 #@rediscache("api:daily", 60*60)
 def api_daily_():
-  benchmark_begin("daily")
   projects = get_projects()
-  benchmark("get_projects")
   commits = query("select sha1, sloc, floc, timestamp from commits where sloc > 0")
-  benchmark("get_commits")
   mapper = get_mapper(commits, "sha1")
-  benchmark("get_mapper")
   matrix = dict()
   for project in projects:
     project_id = project["id"]
@@ -174,7 +162,6 @@ def api_daily_():
           day[project_id] = TimedStat(commit["sloc"], commit["floc"], commit["timestamp"])
       else:
         matrix[d] = {project_id:TimedStat(commit["sloc"], commit["floc"], commit["timestamp"])}
-  benchmark("matrix")
   projects = dict()
   result = []
   for d in sorted(matrix.iterkeys()):
@@ -182,5 +169,16 @@ def api_daily_():
     sloc,floc,timestamp = reduce(tuple_sum, projects.itervalues())
     codefat = 100*floc/sloc if sloc!=0 else 0
     result.append(dict(date=d,sloc=sloc,codefat=codefat))
-  benchmark("daily")
   return json.dumps(result)
+
+@app.route("/api/filelist")
+def api_filelist():
+  project_id = request.args.get('project_id', '')
+  commit_id = request.args.get('commit_id', '')
+  return api_filelist_(project_id, commit_id)
+
+
+@rediscache("api:filelist", 60*60)
+def api_filelist_(project_id, commit_id):
+  filelist = git.ls_tree(get_db(), project_id, commit_id)
+  return json.dumps(filelist)
