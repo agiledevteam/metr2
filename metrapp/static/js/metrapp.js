@@ -143,9 +143,9 @@ angular.module('metrapp', [
 
   $scope.url_for = function(diff) {
     return buildUrl('#/diff', {
-      'projectId': $scope.project.id,
+      'projectId': $scope.projectId,
       'filename': diff.new.filename,
-      'commitId': $scope.commit.sha1,
+      'commitId': $scope.commitId,
       'fileId': diff.new.sha1,
       'parentFileId': diff.old.sha1
     });
