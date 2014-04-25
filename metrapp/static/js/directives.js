@@ -94,6 +94,8 @@ app.directive('calendarGraph', function() {
 
 		scope.$watchCollection("data", update);
 		function update() {
+			if (!scope.data)
+				return;
 			days = days.map(function(){return 0;});
 			scope.data.forEach(function(each){
 				var time = new Date(timestamp(each) * 1000);

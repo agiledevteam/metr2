@@ -150,7 +150,6 @@ metrGraph.directive('pieChart', function() {
 		scope.$watchCollection('data', update);
 
 		function update() {
-			console.log("update", scope.data);
 			data = scope.data;
 			if (!data) {return;}
 

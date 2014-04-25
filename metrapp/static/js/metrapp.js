@@ -81,6 +81,9 @@ angular.module('metrapp', [
     $scope.selectedUser = user;
   };
   $scope.$watch("project.id + project.branch", function() {
+    if (!$scope.project) {
+      return;
+    }
     var queryParams = 'project_id=' + $scope.project.id + '&branch=' + $scope.project.branch;
     $http.get('api/commits?' + queryParams).success(function(commits) {
       $scope.commits = commits;
@@ -115,21 +118,26 @@ angular.module('metrapp', [
 }])
 
 .controller('CommitCtrl', ['$scope', '$http', '$location', function($scope, $http, $location) {
-  update();
   $scope.$watch(function () {
     return $location.path();
   }, update);
   update();
   function update() {
+    console.log("update begin");
     $scope.projectId = $location.path().split("/")[2];
     $scope.commitId = $location.path().split("/")[3];
 
     $http.get('api/commit/' + $scope.projectId + '/' + $scope.commitId).success(function(data) {
       $scope.project = data['project'];
       $scope.commit = data['commit'];
-      $scope.diffs = data['diffs'];
-      $scope.filelist = data['filelist'];
     });
+    $http.get('api/difflist/' + $scope.projectId + '/' + $scope.commitId + '?metric=codefat').success(function(data) {
+      $scope.diffs = data;
+    });
+    $http.get('api/filelist/' + $scope.projectId + '/' + $scope.commitId + '?metric=codefat').success(function(data) {
+      $scope.filelist = data;
+    });
+    console.log("update end");
   }
 
   $scope.url_for = function(diff) {

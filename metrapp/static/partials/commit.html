@@ -1,3 +1,4 @@
+<div ng-controller="CommitCtrl">	
 <h1 class="page-header truncate" ng-bind-html="commit.title|shorten"></h1>
 	<ul class="list-group">
 		<li class="list-group-item">Project: <a href="#/project/{{project.id}}">{{project.name}}</a></li>
@@ -37,7 +38,7 @@
 				<tbody>
 					<tr ng-repeat="file in filelist">
 						<td class="number-column">{{$index+1}}</td>
-						<td><span class="diff-status-{{file.status}}">{{file.name}}</span></td>
+						<td><span class="diff-status-{{file.status}}">{{file.filename}}</span></td>
 						<td class="number-column">{{file.sloc|number}}</td>
 						<td class="number-column">{{file.floc|number:2}}</td>
 						<td class="number-column">{{file.codefat|number:2}}%</td>
@@ -70,4 +71,5 @@
 			</table>
 		</div>
 	</div>
+</div>
 </div>

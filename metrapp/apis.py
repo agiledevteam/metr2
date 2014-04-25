@@ -21,7 +21,7 @@ def remove_duplicates(arr, key):
     result[each[key]] = each  # overwrite
   return result.values()
 
-#@rediscache("api:projects2", 60*60)
+@rediscache("api:projects2", 60*60)
 def api_projects2_():
   commits = query('''
     select c.project_id, c.sloc, c.floc, c.timestamp, c.codefat, c.id
@@ -71,21 +71,36 @@ def api_commits():
   branch = request.args.get('branch', '')
   return json.dumps(get_commits_project_branch(project_id, branch))
 
-@app.route('/api/commit/<int:project_id>/', defaults=dict(commit_id='HEAD'))
 @app.route('/api/commit/<int:project_id>/<commit_id>')
 def api_commit(project_id, commit_id):
   project = get_project(project_id)
   commit = get_commit(project_id, commit_id)
-  filelist = git.ls_tree(get_db(), project_id, commit_id)
-  diffs = git.diff_tree(get_db(), project_id, commit_id)
+  return json.dumps(dict(commit=commit,project=project))
 
-  status_map = dict()
-  for diff in diffs:
-    status_map[diff['new']['filename']] = diff['status']
-  for file in filelist:
-    file['status'] = status_map.get(file['name'], '')
+@app.route('/api/difflist/<int:project_id>/<commit_id>')
+def api_difflist(project_id, commit_id):
+  g = git.load_git(get_db(), project_id)
+  diffs = [each._asdict() for each in g.diff_tree(commit_id)]
 
-  return jsonify(commit=commit,project=project,diffs=diffs,filelist=filelist)
+  metric = request.args.get('metric', '') # get filelist with codefat metric
+  if metric == 'codefat':
+    for diff in diffs:
+      git.metr_file(g, project_id, diff['new'])
+      git.metr_file(g, project_id, diff['old'])
+  return json.dumps(diffs)
+
+@app.route('/api/filelist/<int:project_id>/<commit_id>')
+def api_filelist(project_id, commit_id):
+  g = git.load_git(get_db(), project_id)
+  filelist = [each._asdict() for each in g.ls_tree(commit_id)]
+
+  metric = request.args.get('metric', '') # get filelist with codefat metric
+  if metric == 'codefat':
+    g = git.load_git(get_db(), project_id)
+    for file in filelist:
+      git.metr_file(g, project_id, file)
+
+  return json.dumps(filelist)
 
 @app.route('/api/diff/<int:project_id>/<sha1>/<old>/<new>')
 def api_diff(project_id, sha1, old, new):
@@ -143,7 +158,7 @@ def tuple_sum(a, b):
 def api_daily():
   return api_daily_()
 
-#@rediscache("api:daily", 60*60)
+@rediscache("api:daily", 60*60)
 def api_daily_():
   projects = get_projects()
   commits = query("select sha1, sloc, floc, timestamp from commits where sloc > 0")
@@ -170,15 +185,3 @@ def api_daily_():
     codefat = 100*floc/sloc if sloc!=0 else 0
     result.append(dict(date=d,sloc=sloc,codefat=codefat))
   return json.dumps(result)
-
-@app.route("/api/filelist")
-def api_filelist():
-  project_id = request.args.get('project_id', '')
-  commit_id = request.args.get('commit_id', '')
-  return api_filelist_(project_id, commit_id)
-
-
-@rediscache("api:filelist", 60*60)
-def api_filelist_(project_id, commit_id):
-  filelist = git.ls_tree(get_db(), project_id, commit_id)
-  return json.dumps(filelist)

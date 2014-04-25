@@ -1,3 +1,4 @@
+<div ng-controller="ProjectCtrl">
 <h1 class="page-header">{{project.name}}
   <small>
     <form ng-show="project.name" role="form" class="form-inline" style="display:inline-block;float:right">
@@ -112,4 +113,5 @@
 		</tbody>
 	</table>
   <pagination class="pagination-sm" total-items="(commits|filter:q).length" items-per-page="pageSize" page="currentPage"></pagination>
+</div>
 </div>

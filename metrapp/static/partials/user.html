@@ -1,71 +1,76 @@
-<h1 class="page-header">{{user.author}}</h1>
+<div  ng-controller="UserCtrl">
+  <h1 class="page-header">{{userId}}</h1>
 
-<h2>Summary</h2>
-<div class="row">
-  <div class="col-md-8">
-    <div class="table-responsive">
-      <table class="table table-condensed">
-        <tr>
-          <th>Project</th>
-          <th>#Commits</th>
-          <th>&Sigma;&Delta;SLOC</th>
-          <th>&Sigma;&Delta;FLOC</th>
-        </tr>
-        <tr ng-repeat="each in user.profile | orderBy: 'project_name'">
-          <td><a href="#/project/{{each.project_id}}" class="label label-default">{{each.project_name}}</a></td>
-          <td>{{each.no_commits|number}}</td>
-          <td>{{each.delta_sloc|number}}</td>
-          <td>{{each.delta_floc|number:2}}</td>
-        </tr>
-      </table>
+  <h2>Summary</h2>
+  <div class="row">
+    <div class="col-md-8">
+      <div class="table-responsive">
+        <table class="table table-condensed">
+          <tr>
+            <th>Project</th>
+            <th>#Commits</th>
+            <th>&Sigma;&Delta;SLOC</th>
+            <th>&Sigma;&Delta;FLOC</th>
+          </tr>
+          <tr ng-repeat="each in user.profile | orderBy: 'project_name'">
+            <td><a href="#/project/{{each.project_id}}" class="label label-default">{{each.project_name}}</a></td>
+            <td>{{each.no_commits|number}}</td>
+            <td>{{each.delta_sloc|number}}</td>
+            <td>{{each.delta_floc|number:2}}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <user-profile data="user.profile"></user-profile>
     </div>
   </div>
-  <div class="col-md-4">
-    <user-profile data="user.profile"></user-profile>
-  </div>
-</div>
-</div>
-<h2>Activities</h2>
-<div class="row">
-  <div class="col-md-12">
-    <div calendar-graph data="commits" timestamp="timestamp"></div>
-  </div>
-</div>
-<h2>Commits: {{commits.length}}</h2>
-<div class="row">
-  <div class="col-md-4 col-md-offset-8">
-    <div class="input-group">
-      <span class="input-group-addon"><span class="glyphicon glyphicon-filter"></span></span>
-      <input type="search" class="form-control search-query" placeholder="Search commit..." ng-model="q" />
+
+  <h2>Activities</h2>
+  <div class="row">
+    <div class="col-md-12">
+      <div calendar-graph data="commits" timestamp="timestamp"></div>
     </div>
   </div>
-</div>
-<div class="table-responsive">
-  <table class="table table-condensed">
-   <thead>
-     <tr>
-       <th>ID</th>
-       <th>Project</th>
-       <th>Title</th>
-       <th>When</th>
-       <th>&Delta;SLOC</th>
-       <th>&Delta;FLOC</th>
-       <th>&Delta;<abbr title="Code Fat">CF</abbr></th>
-     </tr>
-   </thead>
-   <tbody>
-    <tr ng-repeat="c in commits | filter:q | page:currentPage:pageSize">
-      <td><a class='sha1' href="#/commit/{{c.project_id}}/{{c.sha1}}">{{c.sha1.substring(0,7)}}</a></td>
-      <td><a href="#/project/{{c.project_id}}" class="label label-default">{{c.project_name}}</a></td>
-      <td><a href="#/commit/{{c.project_id}}/{{c.sha1}}" ng-bind-html="c.title|shorten"></a></td>
-      <td class='truncate'>{{c.timestamp*1000|date:'short'}}</td>
-      <td>{{c.delta_sloc}}</td>
-      <td>{{c.delta_floc|number:2}}</td>
-      <td>{{c.delta_codefat|number:2}}%</td>
-    </tr>
-  </tbody>
-  </table>
-  <pagination class="pagination-sm" total-items="(commits|filter:q).length" items-per-page="pageSize" page="currentPage"></pagination>
-</div>
-</div>
+
+  <h2>Commits: {{commits.length}}</h2>
+  <div class="row">
+    <div class="col-md-4 col-md-offset-8">
+      <div class="input-group">
+        <span class="input-group-addon"><span class="glyphicon glyphicon-filter"></span></span>
+        <input type="search" class="form-control search-query" placeholder="Search commit..." ng-model="q" />
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <div class="table-responsive">
+        <table class="table table-condensed">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Project</th>
+              <th>Title</th>
+              <th>When</th>
+              <th>&Delta;SLOC</th>
+              <th>&Delta;FLOC</th>
+              <th>&Delta;<abbr title="Code Fat">CF</abbr></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="c in commits | filter:q | page:currentPage:pageSize">
+              <td><a class='sha1' href="#/commit/{{c.project_id}}/{{c.sha1}}">{{c.sha1.substring(0,7)}}</a></td>
+              <td><a href="#/project/{{c.project_id}}" class="label label-default">{{c.project_name}}</a></td>
+              <td><a href="#/commit/{{c.project_id}}/{{c.sha1}}" ng-bind-html="c.title|shorten"></a></td>
+              <td class='truncate'>{{c.timestamp*1000|date:'short'}}</td>
+              <td>{{c.delta_sloc}}</td>
+              <td>{{c.delta_floc|number:2}}</td>
+              <td>{{c.delta_codefat|number:2}}%</td>
+            </tr>
+          </tbody>
+        </table>
+        <pagination class="pagination-sm" total-items="(commits|filter:q).length" items-per-page="pageSize" page="currentPage"></pagination>
+      </div>
+    </div>
+  </div>
 </div>

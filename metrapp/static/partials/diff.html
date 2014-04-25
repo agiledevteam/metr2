@@ -1,4 +1,6 @@
-<h1 class="page-header">Diff</h1>
-<ul class="list-unstyled diff-list">
-  <li ng-repeat="line in lines" class="diff-text-{{line.kind}}">{{line.text}}</li>
-</ul>
+<dif  ng-controller="DiffCtrl">
+  <h1 class="page-header">Diff</h1>
+  <ul class="list-unstyled diff-list">
+    <li ng-repeat="line in lines" class="diff-text-{{line.kind}}">{{line.text}}</li>
+  </ul>
+</div>

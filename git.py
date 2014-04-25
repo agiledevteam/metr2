@@ -198,21 +198,22 @@ def ls_tree(db, project_id, sha1):
   files = git.ls_tree(sha1)
   return [dict(f._asdict()) for f in files]
 
+def metr_file(git, project_id, file):
+  try:
+    stat = metr_blob(git, project_id, file['sha1'])
+  except KeyboardInterrupt:
+    raise
+  except:
+    raise
+    #stat = Stat(sloc=0, floc=0)
+  file['sloc'] = stat.sloc
+  file['floc'] = stat.floc
+  file['codefat'] = codefat(stat)
+
 def diff_tree(db, project_id, sha1):
   git = load_git(db, project_id)
-  def metr_file(file):
-    try:
-      stat = metr_blob(git, project_id, file['sha1'])
-    except KeyboardInterrupt:
-      raise
-    except:
-      stat = Stat(sloc=0, floc=0)
-    file['sloc'] = stat.sloc
-    file['floc'] = stat.floc
-    file['codefat'] = codefat(stat)
-    return file
   diffs = git.diff_tree(sha1)
-  return [dict(status=diff.status, old=metr_file(diff.old), new=metr_file(diff.new)) for diff in diffs]
+  return [each._asdict() for each in diffs]
 
 def resolve(db, project_id, ref):
   git = load_git(db, project_id)
@@ -405,10 +406,3 @@ def parse_commit_(obj):
 def get_stats(git, project_id, arr):
   "return [Stat(sloc,floc)] for each sha1 in arr"
   return [metr_blob(git, project_id, sha1) for sha1 in arr]
-
-def ls_tree(db, project_id, commit_id):
-  git = load_git(db, project_id)
-  files = git.ls_tree(commit_id)
-  stats = get_stats(git, project_id, [each[0] for each in files])
-  return [dict(sha1=sha1,name=name,sloc=stat.sloc,floc=stat.floc,codefat=codefat(stat))
-            for (sha1, name), stat in zip(files, stats)]
