@@ -36,6 +36,7 @@ metrGraph.directive('trend', function($window){
 
 			chart.selectAll(".axis").remove();
 			chart.selectAll("path").remove();
+			chart.selectAll('text').remove();
 
 			var data = scope.data;
 			if (scope.since) {
@@ -43,8 +44,24 @@ metrGraph.directive('trend', function($window){
 					return d.date > scope.since;
 				});
 			}
-			if (data.length == 0)
+			if (data.length == 0) {
+				var message = 'No commits';
+				if (scope.since) {
+					message += ' since ' + scope.since.toLocaleDateString();
+				}
+				chart.append('text')
+					.style({
+						"font-size": "3em"
+					})
+					.attr({
+						x: width/2,
+						y: height/2,
+						"fill": "silver",
+						"text-anchor": "middle"
+					})
+					.text(message);
 				return;
+			}
 
 			var minDate = data[0].date;
 			var maxDate = new Date();//data[data.length-1].date;
