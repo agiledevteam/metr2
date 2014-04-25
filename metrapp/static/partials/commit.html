@@ -1,5 +1,5 @@
-<div ng-controller="CommitCtrl">	
-<h1 class="page-header truncate" ng-bind-html="commit.title|shorten"></h1>
+<div ng-controller="CommitCtrl">
+	<h1 class="page-header truncate" ng-bind-html="commit.title|shorten"></h1>
 	<ul class="list-group">
 		<li class="list-group-item">Project: <a href="#/project/{{project.id}}">{{project.name}}</a></li>
 		<li class="list-group-item">
@@ -15,61 +15,61 @@
 		<li class="list-group-item"><pre>{{commit.message}}</pre></li>
 	</ul>
 
-<h2 class="sub-header">Files: {{filelist.length}} (changed: {{diffs.length}})</h2>
-<div class="checkbox">
-  <label>
-    <input type="checkbox" ng-model="showall"> show all</input>
-  </label>
-</div>
+	<h2 class="sub-header">Files: {{filelist.length}} (changed: {{diffs.length}})</h2>
+	<div class="checkbox">
+		<label>
+			<input type="checkbox" ng-model="showall"> Show all files</input>
+		</label>
+	</div>
 
-<div class="row" ng-show="showall">
-	<div class="col-md-12">
-		<div class="table-responsive">
-			<table class="table table-striped">
-				<thead>
-					<tr>
-						<th class="number-column">No.</th>
-						<th>Name</th>
-						<th class="number-column">SLOC</th>
-						<th class="number-column">FLOC</th>
-						<th class="number-column">Code Fat</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr ng-repeat="file in filelist">
-						<td class="number-column">{{$index+1}}</td>
-						<td><span class="diff-status-{{file.status}}">{{file.filename}}</span></td>
-						<td class="number-column">{{file.sloc|number}}</td>
-						<td class="number-column">{{file.floc|number:2}}</td>
-						<td class="number-column">{{file.codefat|number:2}}%</td>
-					</tr>
-				</tbody>
-			</table>
+	<div class="row" ng-show="showall">
+		<div class="col-md-12">
+			<div class="table-responsive">
+				<table class="table table-striped">
+					<thead>
+						<tr>
+							<th class="number-column">No.</th>
+							<th>Name</th>
+							<th class="number-column">SLOC</th>
+							<th class="number-column">FLOC</th>
+							<th class="number-column">Code Fat</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr ng-repeat="file in filelist">
+							<td class="number-column">{{$index+1}}</td>
+							<td><span class="diff-status-{{file.status}}">{{file.filename}}</span></td>
+							<td class="number-column">{{file.sloc|number}}</td>
+							<td class="number-column">{{file.floc|number:2}}</td>
+							<td class="number-column">{{file.codefat|number:2}}%</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
 		</div>
 	</div>
-</div>
-<div class="row" ng-hide="showall">
-	<div class="col-md-12">
-		<div class="table-responsive">
-			<table class="table table-striped">
-				<thead>
-					<tr>
-						<th class="number-column">No.</th>
-						<th>Name</th>
-						<th>SLOC</th>
-						<th>Code Fat</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr ng-repeat="diff in diffs">
-						<td class="number-column">{{$index+1}}</td>
-						<td><a href='{{url_for(diff)}}' class="diff-status-{{diff.status}}">{{diff.new.filename}}</a></td>
-						<td>{{diff.old.sloc}} => {{diff.new.sloc}}</td>
-						<td>{{diff.old.codefat|number:2}}% => {{diff.new.codefat|number:2}}%</td>
-					</tr>
-				</tbody>
-			</table>
+	<div class="row" ng-hide="showall">
+		<div class="col-md-12">
+			<div class="table-responsive">
+				<table class="table table-striped">
+					<thead>
+						<tr>
+							<th class="number-column">No.</th>
+							<th>Name</th>
+							<th>SLOC</th>
+							<th>Code Fat</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr ng-repeat="diff in diffs">
+							<td class="number-column">{{$index+1}}</td>
+							<td><a href='{{url_for(diff)}}' class="diff-status-{{diff.status}}">{{diff.new.filename}}</a></td>
+							<td>{{diff.old.sloc}} => {{diff.new.sloc}}</td>
+							<td>{{diff.old.codefat|number:2}}% => {{diff.new.codefat|number:2}}%</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
 		</div>
 	</div>
-</div>
 </div>

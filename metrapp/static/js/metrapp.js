@@ -118,12 +118,14 @@ angular.module('metrapp', [
 }])
 
 .controller('CommitCtrl', ['$scope', '$http', '$location', function($scope, $http, $location) {
+
   $scope.$watch(function () {
     return $location.path();
   }, update);
+
   update();
+
   function update() {
-    console.log("update begin");
     $scope.projectId = $location.path().split("/")[2];
     $scope.commitId = $location.path().split("/")[3];
 
@@ -137,7 +139,6 @@ angular.module('metrapp', [
     $http.get('api/filelist/' + $scope.projectId + '/' + $scope.commitId + '?metric=codefat').success(function(data) {
       $scope.filelist = data;
     });
-    console.log("update end");
   }
 
   $scope.url_for = function(diff) {
