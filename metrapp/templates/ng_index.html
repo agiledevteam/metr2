@@ -41,28 +41,24 @@
       </div><!-- /.container-fluid -->
     </nav>
 
-    <div class="container-fluid" >
-      <div class="main">
-        <div ng-switch on="page">
-          <div ng-switch-when="user">
-            <div ng-include="'static/partials/user.html'"></div>
-          </div>
-          <div ng-switch-when="project">
-            <div ng-include="'static/partials/project.html'"></div>
-          </div>
-          <div ng-switch-when="users">
-            <div ng-include="'static/partials/users.html'"></div>
-          </div>
-          <div ng-switch-when="commit">
-            <div ng-include="'static/partials/commit.html'"></div>
-          </div>
-          <div ng-switch-when="diff">
-            <div ng-include="'static/partials/diff.html'"></div>
-          </div>
-          <div ng-switch-default>
-            <div ng-include="'static/partials/projects.html'"></div>
-          </div>
-        </div>
+    <div class="container-fluid main" ng-switch on="page">
+      <div ng-switch-when="user">
+        <div ng-include="'static/partials/user.html'"></div>
+      </div>
+      <div ng-switch-when="project">
+        <div ng-include="'static/partials/project.html'"></div>
+      </div>
+      <div ng-switch-when="users">
+        <div ng-include="'static/partials/users.html'"></div>
+      </div>
+      <div ng-switch-when="commit">
+        <div ng-include="'static/partials/commit.html'"></div>
+      </div>
+      <div ng-switch-when="diff">
+        <div ng-include="'static/partials/diff.html'"></div>
+      </div>
+      <div ng-switch-default>
+        <div ng-include="'static/partials/projects.html'"></div>
       </div>
     </div>
 

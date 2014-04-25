@@ -1,3 +1,13 @@
-<div id="content">
-	<svg id="chart" class="chart"></svg>
+<div ng-controller="TrendCtrl" ng-init="trend.since = duration[0]">
+	<trend data="trend.data" since="trend.since"></trend>
+	<div style="text-align:right">
+		<ul class="list-inline">
+			<li ng-repeat="duration in durations">
+				<button
+					class="btn btn-xs btn-default"
+					ng-class="{'btn-primary': trend.since === duration.since }"
+					ng-click="trend.since = duration.since">{{duration.title}}</button>
+			</li>
+		</ul>
+	</div>
 </div>

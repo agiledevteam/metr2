@@ -53,17 +53,31 @@ angular.module('metrapp', [
 
 .controller('ProjectCtrl', ['$scope', '$location', '$http', function($scope, $location, $http) {
   initPagination($scope);
+  $scope.trend = {};
+  $scope.durations = [{
+    title: 'this year',
+    since: new Date(new Date().getFullYear(), 0, 1)
+  }, {
+    title: '12 months',
+    since: new Date().addMonths(-12)
+  }, {
+    title: '6 months',
+    since: new Date().addMonths(-6)
+  }, {
+    title: '3 months',
+    since: new Date().addMonths(-3)
+  }, {
+    title: 'all'
+  }];
 
+  $scope.trend.since = $scope.durations[0].since;
   $scope.$watch(function(){
     return $location.path();
   }, update);
   update();
   function update() {
     $scope.projectId = $location.path().split("/")[2];
-    $scope.trend = {
-      data: [],
-      since: new Date(new Date().getFullYear()-1, 0, 1)
-    };
+    $scope.trend.data = [];
     $http.get('api/project/' + $scope.projectId).success(function(data) {
       $scope.project = data['project'];
     });
