@@ -100,7 +100,16 @@ class Git(object):
         result.append(Entry(sha1, filename))
     return result
 
-  def parse_blob(self, sha1):
+  def get_hash_by_path(self, tree, path):
+    # '100644 blob cf484376827c5299a7ef9e0336a783adc0dc1ee4\tmetrapp/apis.py\n'
+    src = check_output(self.base_cmd + ['ls-tree', tree, '--', path])
+    return src.split()[2]
+
+  def parse_blob(self, sha1 = None, path = None, tree = None):
+    if path != None:
+      if tree == None:
+        tree = 'origin/' + self.branch
+      sha1 = self.get_hash_by_path(tree, path)
     src = check_output(self.base_cmd + ['cat-file', 'blob', sha1], universal_newlines=True)
     return src
 

@@ -46,7 +46,6 @@ app.directive('userProfile', function(){
 				//.attr('transform', 'rotate(90)')
 				.call(yAxis);
 		}
-		scope.$watch('data', update);
 	}
 	return {
 		restrict: 'E',
@@ -167,5 +166,25 @@ app.directive('calendarGraph', function() {
 	return {
 		link: link,
 		scope: {data: '=', timestamp: '&'}
+	};
+});
+
+app.directive('syntaxHighlighter', function() {
+	function link(scope, element) {
+		scope.$watch('file', function(data) {
+			if (!data)
+				return;
+			element.text(data);
+			SyntaxHighlighter.highlight(element[0]);
+		})
+	}
+	return {
+		restrict: 'E',
+		link: link,
+		replace: true,
+		template: '<pre class="brush: java"></pre>',
+		scope: {
+			file: '='
+		}
 	};
 });

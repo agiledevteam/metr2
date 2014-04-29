@@ -154,7 +154,13 @@ angular.module('metrapp', [
       $scope.filelist = data;
     });
   }
-
+  $scope.file_url = function(file) {
+    return buildUrl('#/file', {
+      'projectId': $scope.projectId,
+      'treeId': $scope.commitId,
+      'filename': file.filename
+    });
+  }
   $scope.url_for = function(diff) {
     return buildUrl('#/diff', {
       'projectId': $scope.projectId,

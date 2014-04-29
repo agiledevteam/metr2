@@ -185,3 +185,15 @@ def api_daily_():
     codefat = 100*floc/sloc if sloc!=0 else 0
     result.append(dict(date=d,sloc=sloc,codefat=codefat))
   return json.dumps(result)
+
+@app.route('/api/file')
+def api_file():
+  project_id = request.args.get('projectId', '')
+  tree_id = request.args.get('treeId', '')
+  filename = request.args.get('filename', '')
+
+  g = git.load_git(get_db(), project_id)
+  result = dict()
+  result['project'] = get_project(project_id)
+  result['file'] = g.parse_blob(tree_id, path=filename)
+  return json.dumps(result)

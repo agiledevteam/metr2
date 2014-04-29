@@ -57,6 +57,9 @@
       <div ng-switch-when="diff">
         <div ng-include="'static/partials/diff.html'"></div>
       </div>
+      <div ng-switch-when="file">
+        <div ng-include="'static/partials/file.html'"></div>
+      </div>
       <div ng-switch-default>
         <div ng-include="'static/partials/projects.html'"></div>
       </div>
@@ -74,6 +77,10 @@
     <script src="static/js/metr-graph.js"></script>
     <script src="static/js/services.js"></script>
     <script src="static/js/controllers.js"></script>
+    <script src="http://alexgorbatchev.com/pub/sh/current/scripts/shCore.js"></script>
+    <script src="http://alexgorbatchev.com/pub/sh/current/scripts/shBrushJava.js"></script>
+    <link href="http://alexgorbatchev.com/pub/sh/current/styles/shThemeDefault.css" rel="stylesheet" type="text/css" />
+    <link href="http://alexgorbatchev.com/pub/sh/current/styles/shCore.css" rel="stylesheet" type="text/css" />    
     <script src="static/js/directives.js"></script>
     <script src="static/js/jquery.peity.js"></script>
   </body>

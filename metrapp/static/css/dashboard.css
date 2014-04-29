@@ -99,6 +99,7 @@ body {
   font-family: monospace;
   table-layout: fixed;
   font-size: small;
+  white-space: pre-wrap;
 }
 
 .diff-text- {

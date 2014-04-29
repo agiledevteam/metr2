@@ -33,6 +33,20 @@ app.controller('ProjectListCtrl', ['$scope', 'ProjectList', function($scope, Pro
   }
 }]);
 
+app.controller('FileCtrl', ['$scope', '$location', '$http', function($scope, $location, $http) {
+  $scope.$watch(function(){
+    return $location.path();
+  }, update);
+  update();
+  function update() {
+    $scope.context = $location.search();
+    $http.get('/api/file', {'params' : $scope.context}).success(function(data){
+      $scope.project = data.project;
+      $scope.file = data.file;
+    });
+  }
+}]);
+
 app.controller('UserContributionController', ['$scope', '$http', function($scope, $http){
   $scope.lessLimit = 7;
   $scope.limit = $scope.lessLimit;

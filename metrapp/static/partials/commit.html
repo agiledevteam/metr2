@@ -38,7 +38,7 @@
 					<tbody>
 						<tr ng-repeat="file in filelist">
 							<td class="number-column">{{$index+1}}</td>
-							<td><span class="diff-status-{{file.status}}">{{file.filename}}</span></td>
+							<td><a ng-href="{{file_url(file)}}" class="diff-status-{{file.status}}">{{file.filename}}</a></td>
 							<td class="number-column">{{file.sloc|number}}</td>
 							<td class="number-column">{{file.floc|number:2}}</td>
 							<td class="number-column">{{file.codefat|number:2}}%</td>

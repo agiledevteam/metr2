@@ -1,0 +1,10 @@
+<div ng-controller="FileCtrl">
+  <h1 class="page-header"><a ng-href="#/project/{{context.projectId}}">{{project.name}}</a></h1>
+  <h2 class="page-header"><a ng-href="#/commit/{{context.projectId}}/{{context.treeId}}">{{context.treeId}}</a></h2>
+  <h3 class="page-header">{{context.filename}}</h3>
+  <div class="row">
+    <div class="col-md-12">
+      <syntax-highlighter file='file'></syntax-highlighter>
+    </div>
+  </pre>
+</div>
