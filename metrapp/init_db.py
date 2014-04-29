@@ -1,8 +1,8 @@
 from metrapp import app
 from views import connect_db
 from contextlib import closing
-import metrdb
+import migrate
 
 def init_db():
   with closing(connect_db()) as db:
-    metrdb.init(db)
+    migrate.init(db)

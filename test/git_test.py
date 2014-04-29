@@ -1,12 +1,12 @@
 import unittest
-import metrdb
+import migrate
 import sqlite3
 import git
 
 class GitTest(unittest.TestCase):
 	def setUp(self):
 		self.db = sqlite3.connect(':memory:')
-		metrdb.init(self.db)
+		migrate.init(self.db)
 
 	def testUpdateDailyWhenInsertCommit(self):
 		t1 = 1395154800

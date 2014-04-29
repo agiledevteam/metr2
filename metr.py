@@ -16,13 +16,18 @@ def print_exes(exes):
   for exe in exes:
     exe.dump()
 
-def metr(input):
-  global debug
+def metr(input, debug = False):
   tree = parser.parse_string(input)
   exes = find_executables(tree)
   if debug:
     print_exes(exes)
   return stat_sum(exe.stat() for exe in exes)
+
+def entries(input):
+  tree = parser.parse_string(input)
+  print tree
+  exes = find_executables(tree)
+  return (Entry(e.type, e.name, e.stat()) for e in exes)
 
 def stat_sum(stats):
   sloc = 0
@@ -40,17 +45,66 @@ def find_executables(tree):
 class TreeVisitor(java.Visitor):
   def __init__(self, verbose=False):
     super(TreeVisitor,self).__init__(verbose)
+    self.scope = []
     self.exes = []
+
+  def appendExe(self, name, body):
+    type = ".".join(self.scope)
+    self.exes.append(Executable(type, name, toStmt(body)))
+
+  def pushScope(self, name):
+    self.scope.append(name)
+
+  def popScope(self):
+    self.scope.pop()
+
+  def visitTypeDecl(self, name, body):
+    # manual visiting
+    self.pushScope(name)
+    for each in body:
+      each.accept(self)
+    self.popScope()
+    # prevent further visits
+    return False
+
+  def visit_ClassDeclaration(self, decl):
+    return self.visitTypeDecl(decl.name, decl.body)
+
+  def visit_EnumDeclaration(self, decl):
+    return self.visitTypeDecl(decl.name, decl.body)
+
+  def visit_EnumConstant(self, decl):
+    return self.visitTypeDecl(decl.name, decl.body)
+
+  def visit_InstanceCreation(self, decl):
+    for arg in decl.arguments:
+      arg.accept(self)
+
+    name = []
+    if decl.enclosed_in:
+      name.append(decl.enclosed_in.value)
+    if decl.type.enclosed_in:
+      name.append(decl.type.enclosed_in.name.value)
+    name.append(decl.type.name.value)
+    return self.visitTypeDecl('$' + ".".join(name), decl.body)
 
   def visit_MethodDeclaration(self, decl):
     if decl.body != None:
-      self.exes.append(Executable(decl.name, toStmt(decl.body)))
+      self.appendExe(decl.name, decl.body)
     return True
 
   def visit_ConstructorDeclaration(self, decl):
-    self.exes.append(Executable(decl.name, toStmt(decl.block)))
+    self.appendExe(decl.name, decl.block)
     return True
   
+  def visit_ClassInitializer(self, init):
+    if init.static:
+      name = "<cinit>"
+    else:
+      name = "<init>"
+    self.appendExe(name, init.block)
+    return True
+
   def executables(self):
     return self.exes
 
@@ -88,8 +142,11 @@ def toStmt(stmt):
 
 Stat = namedtuple('Stat', ['sloc', 'floc'])
 
+Entry = namedtuple('Entry', ['type', 'name', 'stat'])
+
 class Executable(object):
-  def __init__(self, name, body):
+  def __init__(self, type, name, body):
+    self.type = type
     self.name = name
     self.body = body
   def stat(self):
@@ -238,7 +295,7 @@ def find_files(dir):
 
 def metr_file(arg):
   f = open(arg,'rU')
-  print arg, metr(f.read())
+  print arg, metr(f.read(), debug)
   f.close()
   
 def run_metr(arg):
