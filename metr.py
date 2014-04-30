@@ -25,7 +25,6 @@ def metr(input, debug = False):
 
 def entries(input):
   tree = parser.parse_string(input)
-  print tree
   exes = find_executables(tree)
   return (Entry(e.type, e.name, e.stat()) for e in exes)
 
