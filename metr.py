@@ -67,6 +67,18 @@ class TreeVisitor(java.Visitor):
     # prevent further visits
     return False
 
+  def visitInstanceCreation(self, decl):
+    for arg in decl.arguments:
+      if isinstance(arg, java.SourceElement):
+        arg.accept(self)
+    name = []
+    if decl.enclosed_in:
+      name.append(decl.enclosed_in.value)
+    if decl.type.enclosed_in:
+      name.append(decl.type.enclosed_in.name.value)
+    name.append(decl.type.name.value)
+    return self.visitTypeDecl('$' + ".".join(name), decl.body)
+
   def visit_ClassDeclaration(self, decl):
     return self.visitTypeDecl(decl.name, decl.body)
 
@@ -77,16 +89,10 @@ class TreeVisitor(java.Visitor):
     return self.visitTypeDecl(decl.name, decl.body)
 
   def visit_InstanceCreation(self, decl):
-    for arg in decl.arguments:
-      arg.accept(self)
-
-    name = []
-    if decl.enclosed_in:
-      name.append(decl.enclosed_in.value)
-    if decl.type.enclosed_in:
-      name.append(decl.type.enclosed_in.name.value)
-    name.append(decl.type.name.value)
-    return self.visitTypeDecl('$' + ".".join(name), decl.body)
+    if len(decl.body) > 0:
+      return self.visitInstanceCreation(decl)
+    else:
+      return True
 
   def visit_MethodDeclaration(self, decl):
     if decl.body != None:
