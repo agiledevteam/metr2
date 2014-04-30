@@ -236,16 +236,24 @@ text.wday {
   width: 1%;
   display: table-cell;
   text-align: center;
-  color: #999;
-  margin: 0;
-  padding: 0;
+  color: steelblue;
+  margin: 5px;
+  padding: 10px;
+  /* background-color: lightsteelblue; */
+  font-size: small;
+  border-radius: 10px;
 }
 
 .summary .num {
   color: #000;
   font-weight: bold;
+  font-size: larger;
 }
 .summary {
   width: 100%;
   font-size: large;
+  margin: 5px 0px 5px 0px;
+  /* margin-top: 5px; */
+  border-radius: 10px;
+  background-color: lightsteelblue;
 }

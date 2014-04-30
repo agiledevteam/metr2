@@ -2,9 +2,42 @@
   <h1 class="page-header"><a ng-href="#/project/{{context.projectId}}">{{project.name}}</a></h1>
   <h2 class="page-header"><a ng-href="#/commit/{{context.projectId}}/{{context.treeId}}">{{context.treeId}}</a></h2>
   <h3 class="page-header">{{context.filename}}</h3>
+
   <div class="row">
     <div class="col-md-12">
-      <syntax-highlighter file='file'></syntax-highlighter>
+		<my-tabs>
+			<my-pane title="Method List">
+				<metr-stat data="file.stat"></metr-stat>
+				<div class="table-responsive">
+					<table class="table table-condensed">
+						<thead>
+							<tr>
+								<th class="number-column">No.</th>
+								<th>Type</th>
+								<th>Method</th>
+								<th class="number-column">SLOC</th>
+								<th class="number-column">FLOC</th>
+								<th class="number-column">Code Fat</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr ng-repeat="entry in file.entries">
+								<td class="number-column">{{$index + 1}}</td>
+								<td>{{entry.type}}</td>
+								<td>{{entry.name}}</td>
+								<td class="number-column">{{entry.sloc|number}}</td>
+								<td class="number-column">{{entry.floc|number:2}}</td>
+								<td class="number-column">{{entry.codefat|number:2}}%</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</my-pane>
+			<my-pane title="Code">
+				<metr-stat data="file.stat"></metr-stat>
+				<syntax-highlighter file="file.contents"></syntax-highlighter>
+			</my-pane>
+		</my-tabs>
     </div>
   </pre>
 </div>

@@ -10,6 +10,7 @@ from collections import OrderedDict
 from itertools import izip
 from rediscache import rediscache
 from collections import namedtuple
+import metr
 
 @app.route('/api/projects2')
 def api_projects2():
@@ -186,6 +187,12 @@ def api_daily_():
     result.append(dict(date=d,sloc=sloc,codefat=codefat))
   return json.dumps(result)
 
+def codefat(stat):
+  sloc = stat.sloc
+  floc = stat.floc
+  codefat = 100*floc/sloc if sloc!=0 else 0
+  return dict(sloc=sloc,floc=floc,codefat=codefat)
+
 @app.route('/api/file')
 def api_file():
   project_id = request.args.get('projectId', '')
@@ -193,7 +200,14 @@ def api_file():
   filename = request.args.get('filename', '')
 
   g = git.load_git(get_db(), project_id)
+  file_contents = unicode(g.parse_blob(tree_id, path=filename), errors='ignore')
+  project = get_project(project_id)
+  entries = metr.entries(file_contents)
+  
+  file_stat = metr.stat_sum(each.stat for each in entries)
+  file_entries = [dict(codefat(each.stat), type=each.type, name=each.name) for each in metr.entries(file_contents)]
+
   result = dict()
-  result['project'] = get_project(project_id)
-  result['file'] = g.parse_blob(tree_id, path=filename)
+  result['project'] = project
+  result['file'] = dict(contents=file_contents, stat=codefat(file_stat), entries=file_entries)
   return json.dumps(result)

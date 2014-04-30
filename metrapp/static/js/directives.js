@@ -189,3 +189,59 @@ app.directive('syntaxHighlighter', function() {
 		}
 	};
 });
+
+app.directive('metrStat', function() {
+	return {
+		restrict: 'E',
+		scope: {
+			data: '='
+		},
+		template: '<ul class="list-inline summary">\n\
+	        <li class="sloc">SLOC <span class="num">{{data.sloc|number}}</span></li>\n\
+	        <li class="floc">FLOC <span class="num">{{data.floc|number:2}}</span></li>\n\
+	        <li class="codefat">Code Fat <span class="num">{{data.codefat|number:2}}%</span></li>\n\
+	      </ul>'
+	};
+});
+
+
+app.directive('myTabs', function() {
+	return {
+		restrict: 'E',
+		transclude: true,
+		scope: {},
+		controller: function($scope) {
+			var panes = $scope.panes = [];
+
+			$scope.select = function(pane) {
+				angular.forEach(panes, function(pane) {
+					pane.selected = false;
+				});
+				pane.selected = true;
+			};
+
+			this.addPane = function(pane) {
+				if (panes.length === 0) {
+					$scope.select(pane);
+				}
+				panes.push(pane);
+			};
+		},
+		templateUrl: 'static/partials/my-tabs.html'
+	};
+});
+
+app.directive('myPane', function() {
+	return {
+		require: '^myTabs',
+		restrict: 'E',
+		transclude: true,
+		scope: {
+			title: '@'
+		},
+		link: function(scope, element, attrs, tabsCtrl) {
+			tabsCtrl.addPane(scope);
+		},
+		templateUrl: 'static/partials/my-pane.html'
+	};
+});
