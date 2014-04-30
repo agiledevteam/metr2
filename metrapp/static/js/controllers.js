@@ -35,7 +35,7 @@ app.controller('ProjectListCtrl', ['$scope', 'ProjectList', function($scope, Pro
 
 app.controller('FileCtrl', ['$scope', '$location', '$http', function($scope, $location, $http) {
   $scope.$watch(function(){
-    return $location.path();
+    return $location.search();
   }, update);
   update();
   function update() {

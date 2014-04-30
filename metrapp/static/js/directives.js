@@ -174,15 +174,16 @@ app.directive('syntaxHighlighter', function() {
 		scope.$watch('file', function(data) {
 			if (!data)
 				return;
-			element.text(data);
-			SyntaxHighlighter.highlight(element[0]);
+			element.html('<pre class="brush: java"></pre>');
+			element.find('pre').text(data);
+			var pre = element.children()[0];
+			SyntaxHighlighter.highlight(pre);
 		})
 	}
 	return {
 		restrict: 'E',
 		link: link,
 		replace: true,
-		template: '<pre class="brush: java"></pre>',
 		scope: {
 			file: '='
 		}
