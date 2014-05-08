@@ -46,6 +46,7 @@ app.directive('userProfile', function(){
 				//.attr('transform', 'rotate(90)')
 				.call(yAxis);
 		}
+		scope.$watch('data', update);
 	}
 	return {
 		restrict: 'E',
@@ -86,10 +87,16 @@ app.directive('calendarGraph', function() {
 		var milliseconds = 1000 * seconds;
 		var days = d3.range(366).map(function(){return 0;});
 		var firstDay = new Date();
-		firstDay.setDate(firstDay.getDate() - days.length);
+		firstDay.setDate(firstDay.getDate() - days.length+1);
 		firstDay = new Date(firstDay.toDateString());
 
 		var offset = firstDay.getDay();
+
+		var tooltip = d3.select("body")
+			.append("div")
+			.style("position", "absolute")
+			.style("z-index", "10")
+			.style("visibility", "hidden");
 
 		scope.$watchCollection("data", update);
 		function update() {
@@ -152,7 +159,14 @@ app.directive('calendarGraph', function() {
 			.attr("y", function(d, i){
 				return ((offset + i) % 7) * (y + dy);
 			})
-			.style('fill', colorRange[0]);
+			.style('fill', colorRange[0])
+			.on("mouseover", function(){return tooltip.style("visibility", "visible");})
+			.on("mousemove", function(d, i){
+				var date = new Date(firstDay.getTime() + i * milliseconds);
+				tooltip.html(d + " commit(s)<br><small>" + date.toLocaleDateString() + "</small>");
+				return tooltip.style("top", (event.pageY-10)+"px").style("left",(event.pageX+10)+"px");
+			})
+			.on("mouseout", function(){return tooltip.style("visibility", "hidden");});
 		calendar.selectAll('text.wday')
 			.data(dayOfWeekLabel).enter().append('text').attr('class', 'wday')
 			.text(function(d){ return d.title;})

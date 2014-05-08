@@ -257,3 +257,7 @@ text.wday {
   border-radius: 10px;
   background-color: lightsteelblue;
 }
+
+div.tooltip {
+  background-color: lightgray; 
+}
