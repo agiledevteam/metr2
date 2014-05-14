@@ -200,7 +200,7 @@ def api_file():
   filename = request.args.get('filename', '')
 
   g = git.load_git(get_db(), project_id)
-  file_contents = unicode(g.parse_blob(tree_id, path=filename), errors='ignore')
+  file_contents = unicode(g.parse_blob(tree=tree_id, path=filename), errors='ignore')
   project = get_project(project_id)
   entries = metr.entries(file_contents)
   
