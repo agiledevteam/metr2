@@ -213,8 +213,8 @@ def metr_file(git, project_id, file):
   except KeyboardInterrupt:
     raise
   except:
-    raise
-    #stat = Stat(sloc=0, floc=0)
+    stat = Stat(sloc=0, floc=0)
+    file['status'] = 'error'
   file['sloc'] = stat.sloc
   file['floc'] = stat.floc
   file['codefat'] = codefat(stat)

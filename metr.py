@@ -26,7 +26,7 @@ def metr(input, debug = False):
 def entries(input):
   tree = parser.parse_string(input)
   exes = find_executables(tree)
-  return (Entry(e.type, e.name, e.stat()) for e in exes)
+  return [Entry(e.type, e.name, e.stat()) for e in exes]
 
 def stat_sum(stats):
   sloc = 0

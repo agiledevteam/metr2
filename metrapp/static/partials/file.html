@@ -32,6 +32,7 @@
 						</tbody>
 					</table>
 				</div>
+				<div ng-if="error" class="alert alert-danger">{{error}}</div>
 			</my-pane>
 			<my-pane title="Code">
 				<metr-stat data="file.stat"></metr-stat>

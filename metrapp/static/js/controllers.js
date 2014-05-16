@@ -43,6 +43,7 @@ app.controller('FileCtrl', ['$scope', '$location', '$http', function($scope, $lo
     $http.get('/api/file', {'params' : $scope.context}).success(function(data){
       $scope.project = data.project;
       $scope.file = data.file;
+      $scope.error = data.error;
     });
   }
 }]);

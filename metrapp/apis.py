@@ -1,6 +1,7 @@
 from flask import jsonify, json, request
 from datetime import datetime, date, timedelta
 import time
+import sys
 # metr
 from metrapp import app
 from metrapp.views import get_db
@@ -199,15 +200,20 @@ def api_file():
   tree_id = request.args.get('treeId', '')
   filename = request.args.get('filename', '')
 
+  result = dict()
+
   g = git.load_git(get_db(), project_id)
   file_contents = unicode(g.parse_blob(tree=tree_id, path=filename), errors='ignore')
   project = get_project(project_id)
-  entries = metr.entries(file_contents)
+  try:
+    entries = metr.entries(file_contents)
+  except:
+    entries = []
+    result['error'] = "Unexpected error:%s" % (sys.exc_info()[0],)
   
   file_stat = metr.stat_sum(each.stat for each in entries)
-  file_entries = [dict(codefat(each.stat), type=each.type, name=each.name) for each in metr.entries(file_contents)]
+  file_entries = [dict(codefat(each.stat), type=each.type, name=each.name) for each in entries]
 
-  result = dict()
   result['project'] = project
   result['file'] = dict(contents=file_contents, stat=codefat(file_stat), entries=file_entries)
   return json.dumps(result)
