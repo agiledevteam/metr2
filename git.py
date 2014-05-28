@@ -48,7 +48,7 @@ class Git(object):
   def update(self):
     if self.cloned():
       if self.fetch():
-        self.merge()
+        self.resetToOriginMaster()
         return True
       return False
     else:
@@ -67,8 +67,8 @@ class Git(object):
     output = check_output(self.base_cmd + ['fetch', '-n'], stderr=STDOUT)
     return output != ""
 
-  def merge(self):
-    call(self.base_cmd + ['merge', 'origin/' + self.branch])
+  def resetToOriginMaster(self):
+    call(self.base_cmd + ['reset', '--hard', 'origin/' + self.branch])
 
   def clone(self):
     call(['git', 'clone', self.repository, '-b', self.branch, self.worktree])
