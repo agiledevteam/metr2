@@ -7,7 +7,7 @@ metrGraph.directive('trend', function($window){
 		var chart = d3.select(element[0])
 				.style({width: "100%"})
 			.append('svg')
-				.style({width: "100%",height: "100%"})
+				.attr({width: "100%",height: "100%"})
 			.append("g")
 			 	.attr("transform", "translate("+margin.left+","+margin.top+")");
 
@@ -146,7 +146,7 @@ metrGraph.directive('pieChart', function() {
 		var width = 250;
 		var height = 250;
 		var margin = 50;
-		var svg = d3.select(element[0]).append('svg').style({width:width, height:height});
+		var svg = d3.select(element[0]).append('svg').attr({width:width, height:height});
 
 		var min = Math.min(width, height);
 
