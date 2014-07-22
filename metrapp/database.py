@@ -30,6 +30,10 @@ def get_project(project_id):
   cur = get_db().execute('select id, name, branch from projects where id = ?', (project_id,))
   return make_dict(cur, cur.fetchone())
 
+def find_project(refspec):
+  cur = get_db().execute('select id from projects where repository like ?', ( "%" + refspec,))
+  return [id for (id,) in cur.fetchall()]
+
 def get_user(author):
   cur = get_db().execute("""select
       author,

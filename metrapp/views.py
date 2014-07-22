@@ -1,5 +1,5 @@
 from metrapp import app
-from flask import send_file
+from flask import send_file, redirect, request
 from datetime import datetime, date, timedelta
 import git
 from database import *
@@ -23,3 +23,13 @@ def update_repositories():
 def delete(project_id):
   git.delete(get_db(), project_id)
   return "ok"
+
+@app.route('/project')
+def project():
+  refspec = request.args.get('git', '')
+  if refspec is '':
+  	return redirect('/')
+  projects = find_project(refspec)
+  if len(projects) != 1:
+  	return redirect('/')
+  return redirect("#/project/%d" % (projects[0],))
